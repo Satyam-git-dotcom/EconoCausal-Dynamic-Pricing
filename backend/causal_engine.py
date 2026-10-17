@@ -440,3 +440,5 @@ class CausalEngine:
             "original_average_effect": round(orig_effect, 4),
             "refutations": refutation_results
         }
+
+# EconML LinearDML Integration
