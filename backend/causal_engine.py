@@ -442,3 +442,4 @@ class CausalEngine:
         }
 
 # EconML LinearDML Integration
+# LightGBM and Random Forest nuisance estimators
