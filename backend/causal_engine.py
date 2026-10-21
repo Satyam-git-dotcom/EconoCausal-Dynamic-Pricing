@@ -444,3 +444,4 @@ class CausalEngine:
 # EconML LinearDML Integration
 # LightGBM and Random Forest nuisance estimators
 # Customer-level ITE estimation and segment labeling
+# Qini curve calculation logic
