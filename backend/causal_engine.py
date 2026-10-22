@@ -445,3 +445,4 @@ class CausalEngine:
 # LightGBM and Random Forest nuisance estimators
 # Customer-level ITE estimation and segment labeling
 # Qini curve calculation logic
+# Cumulative Uplift curves and AUUC metric calculations
