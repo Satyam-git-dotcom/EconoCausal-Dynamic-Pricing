@@ -210,3 +210,5 @@ class PrescriptiveOptimizer:
                 "wasted_spend_prevented": round(wasted_spend_saved, 2)
             }
         }
+
+# Multi-tier discount allocation algorithm ($0, $10, $20) under budget
