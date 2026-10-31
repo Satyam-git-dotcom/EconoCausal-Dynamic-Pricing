@@ -388,5 +388,3 @@ export default function OptimizationMatrix({
     </div>
   );
 }
-
-// Interactive budget slider and CSV export functionality

@@ -440,10 +440,3 @@ class CausalEngine:
             "original_average_effect": round(orig_effect, 4),
             "refutations": refutation_results
         }
-
-# EconML LinearDML Integration
-# LightGBM and Random Forest nuisance estimators
-# Customer-level ITE estimation and segment labeling
-# Qini curve calculation logic
-# Cumulative Uplift curves and AUUC metric calculations
-# DoWhy Placebo Treatment Refuter and sensitivity tests
