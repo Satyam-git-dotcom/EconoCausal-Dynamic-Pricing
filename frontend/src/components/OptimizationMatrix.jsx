@@ -8,13 +8,18 @@ import {
   Download, 
   ChevronLeft, 
   ChevronRight, 
-  RefreshCw,
-  CheckCircle2,
-  ShieldCheck,
-  Percent,
-  TrendingUp,
-  UserCheck
+  RefreshCw, 
+  CheckCircle2, 
+  ShieldCheck, 
+  Percent, 
+  TrendingUp, 
+  UserCheck,
+  Activity,
+  BarChart3,
+  HelpCircle,
+  Award
 } from 'lucide-react';
+import PlotlyChart from './PlotlyChart';
 
 export default function OptimizationMatrix({ 
   optimizationData, 
@@ -27,6 +32,9 @@ export default function OptimizationMatrix({
   const [selectedSegment, setSelectedSegment] = useState('All');
   const [selectedTier, setSelectedTier] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState('table'); // 'table' or 'sensitivity'
+  const [sensitivityData, setSensitivityData] = useState(null);
+  const [loadingSensitivity, setLoadingSensitivity] = useState(false);
   
   // Table state
   const [customers, setCustomers] = useState([]);
@@ -35,6 +43,25 @@ export default function OptimizationMatrix({
   const [totalRecords, setTotalRecords] = useState(0);
   const [segmentCounts, setSegmentCounts] = useState({});
   const [loadingTable, setLoadingTable] = useState(false);
+
+  const loadSensitivity = async () => {
+    setLoadingSensitivity(true);
+    try {
+      const res = await fetch('http://localhost:8000/api/optimize/marginal-roi?budget_min=1000&budget_max=15000&steps=10');
+      const data = await res.json();
+      setSensitivityData(data);
+    } catch (err) {
+      console.error('Sensitivity error:', err);
+    } finally {
+      setLoadingSensitivity(false);
+    }
+  };
+
+  useEffect(() => {
+    if (viewMode === 'sensitivity' && !sensitivityData) {
+      loadSensitivity();
+    }
+  }, [viewMode]);
 
   // Load customer prescriptions
   const loadCustomers = async () => {
@@ -239,151 +266,255 @@ export default function OptimizationMatrix({
         </div>
       </div>
 
-      {/* Customer Prescriptions Table */}
+      {/* Prescriptions & Sensitivity Tabs */}
       <div className="glass-panel prescription-table-card">
         <div className="table-toolbar">
           <div className="toolbar-left">
-            <h3>Customer Prescriptions Matrix</h3>
-            <span className="text-dim text-sm">Showing {totalRecords.toLocaleString()} individual profiles</span>
+            <div className="tab-pill-group">
+              <button 
+                type="button"
+                className={`tab-pill ${viewMode === 'table' ? 'tab-pill-active' : ''}`}
+                onClick={() => setViewMode('table')}
+              >
+                Customer Prescriptions Matrix
+              </button>
+              <button 
+                type="button"
+                className={`tab-pill ${viewMode === 'sensitivity' ? 'tab-pill-active' : ''}`}
+                onClick={() => setViewMode('sensitivity')}
+              >
+                Dual Simplex Sensitivity &amp; Saturation
+              </button>
+            </div>
+            <span className="text-dim text-sm ml-2">
+              {viewMode === 'table' ? `Showing ${totalRecords.toLocaleString()} individual profiles` : 'Shadow price & marginal ROI analytics'}
+            </span>
           </div>
 
-          <div className="toolbar-filters">
-            {/* Search */}
-            <div className="search-input-wrap">
-              <Search size={14} className="search-icon" />
-              <input
-                type="text"
-                placeholder="Search CUST-..."
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setPage(1);
-                }}
-                className="search-input"
-              />
-            </div>
+          {viewMode === 'table' ? (
+            <div className="toolbar-filters">
+              {/* Search */}
+              <div className="search-input-wrap">
+                <Search size={14} className="search-icon" />
+                <input
+                  type="text"
+                  placeholder="Search CUST-..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setPage(1);
+                  }}
+                  className="search-input"
+                />
+              </div>
 
-            {/* Segment Filter */}
-            <div className="filter-select-wrap">
-              <Filter size={14} className="filter-icon" />
-              <select
-                value={selectedSegment}
-                onChange={(e) => {
-                  setSelectedSegment(e.target.value);
-                  setPage(1);
-                }}
-                className="select-input select-sm"
-              >
-                <option value="All">All Archetypes</option>
-                <option value="Persuadables">Persuadables</option>
-                <option value="Sure Things">Sure Things</option>
-                <option value="Lost Causes">Lost Causes</option>
-                <option value="Sleeping Dogs">Sleeping Dogs</option>
-              </select>
-            </div>
+              {/* Segment Filter */}
+              <div className="filter-select-wrap">
+                <Filter size={14} className="filter-icon" />
+                <select
+                  value={selectedSegment}
+                  onChange={(e) => {
+                    setSelectedSegment(e.target.value);
+                    setPage(1);
+                  }}
+                  className="select-input select-sm"
+                >
+                  <option value="All">All Archetypes</option>
+                  <option value="Persuadables">Persuadables</option>
+                  <option value="Sure Things">Sure Things</option>
+                  <option value="Lost Causes">Lost Causes</option>
+                  <option value="Sleeping Dogs">Sleeping Dogs</option>
+                </select>
+              </div>
 
-            {/* Tier Filter */}
-            <div className="filter-select-wrap">
-              <select
-                value={selectedTier}
-                onChange={(e) => {
-                  setSelectedTier(e.target.value);
-                  setPage(1);
-                }}
-                className="select-input select-sm"
-              >
-                <option value="All">All Discount Tiers</option>
-                <option value="0">$0 (No Promo)</option>
-                <option value="10">$10 Promo</option>
-                <option value="20">$20 Promo</option>
-              </select>
-            </div>
+              {/* Tier Filter */}
+              <div className="filter-select-wrap">
+                <select
+                  value={selectedTier}
+                  onChange={(e) => {
+                    setSelectedTier(e.target.value);
+                    setPage(1);
+                  }}
+                  className="select-input select-sm"
+                >
+                  <option value="All">All Discount Tiers</option>
+                  <option value="0">$0 (No Promo)</option>
+                  <option value="10">$10 Promo</option>
+                  <option value="20">$20 Promo</option>
+                </select>
+              </div>
 
-            {/* Export CSV */}
-            <button className="btn btn-secondary btn-sm" onClick={handleExportCSV}>
-              <Download size={14} />
-              <span>Export CSV</span>
+              {/* Export CSV */}
+              <button className="btn btn-secondary btn-sm" onClick={handleExportCSV}>
+                <Download size={14} />
+                <span>Export CSV</span>
+              </button>
+            </div>
+          ) : (
+            <button className="btn btn-secondary btn-sm" onClick={loadSensitivity} disabled={loadingSensitivity}>
+              <RefreshCw size={14} className={loadingSensitivity ? "spin" : ""} />
+              <span>Refresh Sensitivity</span>
             </button>
-          </div>
+          )}
         </div>
 
-        {/* Table Content */}
-        <div className="table-responsive">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Customer ID</th>
-                <th>Tier</th>
-                <th>Income</th>
-                <th>Recency</th>
-                <th>Baseline Conv.</th>
-                <th>Estimated ITE</th>
-                <th>Causal Segment</th>
-                <th>Optimal Prescription</th>
-                <th>Net Incremental Gain</th>
-                <th>Cost to Serve</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loadingTable ? (
-                <tr>
-                  <td colSpan={10} className="text-center py-6">
-                    <RefreshCw size={24} className="spin text-blue mx-auto mb-2" />
-                    <span className="text-muted">Loading customer records...</span>
-                  </td>
-                </tr>
-              ) : customers.length === 0 ? (
-                <tr>
-                  <td colSpan={10} className="text-center py-6 text-muted">
-                    No customers match the active filters.
-                  </td>
-                </tr>
-              ) : (
-                customers.map((c) => (
-                  <tr key={c.customer_id}>
-                    <td className="font-mono text-bright">{c.customer_id}</td>
-                    <td>{c.loyalty_name || `Tier ${c.loyalty_tier}`}</td>
-                    <td>${c.annual_income_k}k</td>
-                    <td>{c.recency_days}d</td>
-                    <td className="font-mono">{(c.baseline_prob * 100).toFixed(1)}%</td>
-                    <td className="font-mono text-emerald font-semibold">
-                      +{((c.estimated_ite || 0) * 100).toFixed(1)}%
-                    </td>
-                    <td>{getSegmentBadge(c.predicted_segment || c.true_segment)}</td>
-                    <td>{getDiscountBadge(c.optimal_discount)}</td>
-                    <td className="font-mono text-emerald font-bold">
-                      {c.net_incremental_gain > 0 ? `+$${c.net_incremental_gain}` : `$${c.net_incremental_gain}`}
-                    </td>
-                    <td className="font-mono text-dim">${c.cost_to_serve || 0}</td>
+        {viewMode === 'sensitivity' ? (
+          <div className="sensitivity-view-container animate-fade-in p-4">
+            {loadingSensitivity ? (
+              <div className="text-center py-12">
+                <RefreshCw size={28} className="spin text-blue mx-auto mb-2" />
+                <span className="text-muted">Computing Dual Simplex sensitivity curve across budget trajectory...</span>
+              </div>
+            ) : sensitivityData ? (
+              <div>
+                <div className="glass-panel p-4 mb-4" style={{ background: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Award size={18} className="text-emerald" />
+                    <h4 className="font-semibold text-bright">CFO Executive Recommendation</h4>
+                  </div>
+                  <p className="text-sm text-muted">{sensitivityData.cfo_recommendation}</p>
+                </div>
+
+                <div className="chart-container" style={{ minHeight: '380px' }}>
+                  <PlotlyChart
+                    data={[
+                      {
+                        x: sensitivityData.budgets,
+                        y: sensitivityData.net_profits,
+                        name: 'Net Incremental Profit ($)',
+                        type: 'scatter',
+                        mode: 'lines+markers',
+                        fill: 'tozeroy',
+                        fillcolor: 'rgba(16, 185, 129, 0.1)',
+                        line: { color: '#10b981', width: 3 },
+                        marker: { size: 6, color: '#10b981' },
+                        yaxis: 'y1'
+                      },
+                      {
+                        x: sensitivityData.budgets,
+                        y: sensitivityData.marginal_rois,
+                        name: 'Marginal ROI (λ* = dProfit / dSpend)',
+                        type: 'scatter',
+                        mode: 'lines+markers',
+                        line: { color: '#38bdf8', width: 2.5, dash: 'dot' },
+                        marker: { size: 7, color: '#38bdf8', symbol: 'diamond' },
+                        yaxis: 'y2'
+                      }
+                    ]}
+                    layout={{
+                      title: {
+                        text: 'Dual Simplex Budget Sensitivity & Law of Diminishing Marginal Returns',
+                        font: { color: '#ffffff', size: 14 }
+                      },
+                      xaxis: { title: 'Marketing Promotional Budget ($)', tickprefix: '$' },
+                      yaxis: {
+                        title: 'Total Incremental Profit ($)',
+                        titlefont: { color: '#10b981' },
+                        tickfont: { color: '#10b981' }
+                      },
+                      yaxis2: {
+                        title: 'Marginal ROI Rate (λ*)',
+                        titlefont: { color: '#38bdf8' },
+                        tickfont: { color: '#38bdf8' },
+                        overlaying: 'y',
+                        side: 'right',
+                        range: [0, Math.max(...sensitivityData.marginal_rois) * 1.25]
+                      },
+                      legend: { x: 0.05, y: 0.95, bgcolor: 'rgba(15, 23, 42, 0.85)' }
+                    }}
+                  />
+                </div>
+
+                <div className="mt-4 p-3 bg-slate-900/60 rounded text-xs text-muted flex items-start gap-2">
+                  <HelpCircle size={14} className="text-blue mt-0.5 shrink-0" />
+                  <span>
+                    <strong>Economic Interpretation:</strong> As promotional budget expands, the solver first exhausts high-uplift Persuadables (high shadow price λ*). When the budget surpasses the saturation point (${sensitivityData.saturation_budget.toLocaleString()}), the marginal return falls below $1.00 per dollar spent, meaning additional discounts would subsidize non-incremental conversions.
+                  </span>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        ) : (
+          <>
+            {/* Table Content */}
+            <div className="table-responsive">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Customer ID</th>
+                    <th>Tier</th>
+                    <th>Income</th>
+                    <th>Recency</th>
+                    <th>Baseline Conv.</th>
+                    <th>Estimated ITE</th>
+                    <th>Causal Segment</th>
+                    <th>Optimal Prescription</th>
+                    <th>Net Incremental Gain</th>
+                    <th>Cost to Serve</th>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                </thead>
+                <tbody>
+                  {loadingTable ? (
+                    <tr>
+                      <td colSpan={10} className="text-center py-6">
+                        <RefreshCw size={24} className="spin text-blue mx-auto mb-2" />
+                        <span className="text-muted">Loading customer records...</span>
+                      </td>
+                    </tr>
+                  ) : customers.length === 0 ? (
+                    <tr>
+                      <td colSpan={10} className="text-center py-6 text-muted">
+                        No customers match the active filters.
+                      </td>
+                    </tr>
+                  ) : (
+                    customers.map((c) => (
+                      <tr key={c.customer_id}>
+                        <td className="font-mono text-bright">{c.customer_id}</td>
+                        <td>{c.loyalty_name || `Tier ${c.loyalty_tier}`}</td>
+                        <td>${c.annual_income_k}k</td>
+                        <td>{c.recency_days}d</td>
+                        <td className="font-mono">{(c.baseline_prob * 100).toFixed(1)}%</td>
+                        <td className="font-mono text-emerald font-semibold">
+                          +{((c.estimated_ite || 0) * 100).toFixed(1)}%
+                        </td>
+                        <td>{getSegmentBadge(c.predicted_segment || c.true_segment)}</td>
+                        <td>{getDiscountBadge(c.optimal_discount)}</td>
+                        <td className="font-mono text-emerald font-bold">
+                          {c.net_incremental_gain > 0 ? `+$${c.net_incremental_gain}` : `$${c.net_incremental_gain}`}
+                        </td>
+                        <td className="font-mono text-dim">${c.cost_to_serve || 0}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
 
-        {/* Table Pagination */}
-        <div className="table-pagination">
-          <span className="text-sm text-dim">
-            Page {page} of {totalPages}
-          </span>
-          <div className="pagination-buttons">
-            <button
-              className="btn btn-secondary btn-sm"
-              disabled={page <= 1}
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-            >
-              <ChevronLeft size={16} /> Previous
-            </button>
-            <button
-              className="btn btn-secondary btn-sm"
-              disabled={page >= totalPages}
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            >
-              Next <ChevronRight size={16} />
-            </button>
-          </div>
-        </div>
+            {/* Table Pagination */}
+            <div className="table-pagination">
+              <span className="text-sm text-dim">
+                Page {page} of {totalPages}
+              </span>
+              <div className="pagination-buttons">
+                <button
+                  className="btn btn-secondary btn-sm"
+                  disabled={page <= 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                >
+                  <ChevronLeft size={16} /> Previous
+                </button>
+                <button
+                  className="btn btn-secondary btn-sm"
+                  disabled={page >= totalPages}
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                >
+                  Next <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

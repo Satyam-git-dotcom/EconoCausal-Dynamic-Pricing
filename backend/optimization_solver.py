@@ -210,3 +210,56 @@ class PrescriptiveOptimizer:
                 "wasted_spend_prevented": round(wasted_spend_saved, 2)
             }
         }
+
+    def compute_marginal_roi_curve(
+        self,
+        budget_min: float = 1000.0,
+        budget_max: float = 20000.0,
+        steps: int = 10
+    ) -> Dict[str, Any]:
+        """
+        Dual Simplex Sensitivity Analysis:
+        Calculates Shadow Price lambda = d(Profit)/d(Budget) and Marginal ROI
+        across a discrete budget trajectory to identify the capital saturation ceiling.
+        """
+        budgets = np.linspace(budget_min, budget_max, steps)
+        profit_points = []
+        spend_points = []
+        marginal_rois = []
+        
+        prev_spend = 0.0
+        prev_profit = 0.0
+        saturation_budget = float(budget_max)
+        
+        for idx, b in enumerate(budgets):
+            res = self.solve_allocation(budget=float(b))
+            spend = res["optimal_strategy"]["total_spend"]
+            profit = res["optimal_strategy"]["net_incremental_revenue"]
+            
+            if idx == 0:
+                marginal_rate = profit / max(spend, 1.0)
+            else:
+                delta_spend = spend - prev_spend
+                delta_profit = profit - prev_profit
+                marginal_rate = (delta_profit / delta_spend) if delta_spend > 10.0 else 0.0
+                
+            m_rate = round(float(max(marginal_rate, 0.0)), 2)
+            marginal_rois.append(m_rate)
+            profit_points.append(round(float(profit), 2))
+            spend_points.append(round(float(spend), 2))
+            
+            if idx > 1 and m_rate < 1.05 and saturation_budget == float(budget_max):
+                saturation_budget = round(float(b), 0)
+                
+            prev_spend = spend
+            prev_profit = profit
+            
+        return {
+            "budgets": [round(float(b), 0) for b in budgets],
+            "actual_spends": spend_points,
+            "net_profits": profit_points,
+            "marginal_rois": marginal_rois,
+            "saturation_budget": saturation_budget,
+            "cfo_recommendation": f"Optimal capital deployment ceiling is ${saturation_budget:,.0f}. Beyond this threshold, marginal return falls below $1.00 per dollar spent due to customer pool saturation."
+        }
+

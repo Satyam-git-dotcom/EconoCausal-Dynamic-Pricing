@@ -2,7 +2,14 @@
 test_optimizer.py - Unit tests for Prescriptive SciPy Optimization Solver
 """
 
-import pytest
+try:
+    import pytest
+except ImportError:
+    class DummyPytest:
+        @staticmethod
+        def fixture(fn):
+            return fn
+    pytest = DummyPytest()
 import numpy as np
 import pandas as pd
 import sys
@@ -45,3 +52,24 @@ def test_prescriptive_roi_superiority(trained_optimizer):
 def test_zero_or_low_budget_edge_case(trained_optimizer):
     res = trained_optimizer.solve_allocation(budget=100.0)
     assert res["optimal_strategy"]["total_spend"] <= 100.0
+
+def test_marginal_roi_sensitivity(trained_optimizer):
+    curve = trained_optimizer.compute_marginal_roi_curve(budget_min=1000.0, budget_max=8000.0, steps=5)
+    assert len(curve["budgets"]) == 5
+    assert len(curve["marginal_rois"]) == 5
+    assert len(curve["net_profits"]) == 5
+    # Total profits should be non-decreasing with budget
+    assert curve["net_profits"][-1] >= curve["net_profits"][0]
+    assert curve["saturation_budget"] > 0
+    assert "cfo_recommendation" in curve
+
+if __name__ == "__main__":
+    df = generate_retail_dataset(n_samples=300, random_seed=42)
+    eng = CausalEngine(df)
+    eng.train_double_ml(base_estimator="lightgbm", n_splits=2)
+    opt = PrescriptiveOptimizer(eng.df)
+    test_budget_strict_adherence(opt)
+    test_prescriptive_roi_superiority(opt)
+    test_zero_or_low_budget_edge_case(opt)
+    test_marginal_roi_sensitivity(opt)
+    print("ALL OPTIMIZER AND MARGINAL ROI TESTS PASSED!")

@@ -5,6 +5,13 @@ Propensity Score Matching, Prescriptive Optimization (SciPy),
 and Data Drift Monitoring to the React frontend.
 """
 
+# Starlette 1.x / FastAPI compatibility patch
+import starlette.routing
+_orig_router_init = starlette.routing.Router.__init__
+starlette.routing.Router.__init__ = lambda self, *a, **kw: _orig_router_init(
+    self, *a, **{k: v for k, v in kw.items() if k not in ("on_startup", "on_shutdown")}
+)
+
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -191,6 +198,10 @@ def optimize_budget(config: OptimizeConfig):
     )
     state.optimization_results = res
     return res
+
+@app.get("/api/optimize/marginal-roi")
+def get_marginal_roi_sensitivity(budget_min: float = 1000.0, budget_max: float = 20000.0, steps: int = 10):
+    return state.optimizer.compute_marginal_roi_curve(budget_min=budget_min, budget_max=budget_max, steps=steps)
 
 @app.get("/api/customers")
 def get_customers(
