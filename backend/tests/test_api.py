@@ -2,7 +2,13 @@
 test_api.py - Integration tests for FastAPI REST Endpoints
 """
 
-import pytest
+try:
+    import pytest
+except Exception:
+    class MockPytest:
+        def fixture(self, fn):
+            return fn
+    pytest = MockPytest()
 import sys
 import os
 from fastapi.testclient import TestClient
@@ -66,3 +72,19 @@ def test_drift_evaluate_endpoint():
     assert "system_status" in data
     assert "features" in data
     assert len(data["features"]) >= 4
+
+if __name__ == "__main__":
+    print("Testing FastAPI Endpoints...")
+    test_health_check_endpoint()
+    print("  [✓] Health check endpoint passed")
+    test_get_dataset_endpoint()
+    print("  [✓] Dataset endpoint passed")
+    test_get_dag_endpoint()
+    print("  [✓] DAG endpoint passed")
+    test_optimize_budget_endpoint()
+    print("  [✓] Optimize budget endpoint passed")
+    test_customer_matrix_pagination()
+    print("  [✓] Customer matrix pagination passed")
+    test_drift_evaluate_endpoint()
+    print("  [✓] Drift evaluate endpoint passed")
+    print("ALL REST API INTEGRATION TESTS PASSED!")

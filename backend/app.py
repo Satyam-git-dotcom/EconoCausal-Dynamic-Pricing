@@ -13,9 +13,12 @@ starlette.routing.Router.__init__ = lambda self, *a, **kw: _orig_router_init(
 )
 
 from fastapi import FastAPI, HTTPException, UploadFile, File
+# Starlette TestClient / middleware max_body_size compatibility
+setattr(FastAPI, "max_body_size", None)
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
+import os
 import numpy as np
 import pandas as pd
 import io
@@ -43,7 +46,8 @@ app.add_middleware(
 # Global State Container
 class GlobalState:
     def __init__(self):
-        self.df = generate_retail_dataset(n_samples=3000, confounding_strength=0.8, random_seed=42)
+        n_init = 600 if os.environ.get("TESTING") == "1" else 3000
+        self.df = generate_retail_dataset(n_samples=n_init, confounding_strength=0.8, random_seed=42)
         self.causal_engine = CausalEngine(self.df)
         self.matcher = PropensityMatcher(self.df)
         self.optimizer = PrescriptiveOptimizer(self.df)

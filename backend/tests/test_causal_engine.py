@@ -2,7 +2,13 @@
 test_causal_engine.py - Unit tests for Causal Inference & Double ML Engine
 """
 
-import pytest
+try:
+    import pytest
+except Exception:
+    class MockPytest:
+        def fixture(self, fn):
+            return fn
+    pytest = MockPytest()
 import numpy as np
 import pandas as pd
 import sys
@@ -63,3 +69,16 @@ def test_uplift_curves_calculation(sample_dataset):
     assert curves["causal_dml"]["auuc"] > 0
     assert len(curves["causal_dml"]["qini"]) == 10
     assert len(curves["causal_dml"]["cumulative_uplift"]) == 10
+
+if __name__ == "__main__":
+    print("Testing Causal Engine...")
+    ds = sample_dataset()
+    test_dataset_generation_properties(ds)
+    print("  [✓] Dataset Generation Properties passed")
+    test_causal_dag_specification(ds)
+    print("  [✓] Causal DAG Specification passed")
+    test_double_ml_training_convergence(ds)
+    print("  [✓] Double ML Training Convergence passed")
+    test_uplift_curves_calculation(ds)
+    print("  [✓] Uplift Curves Calculation passed")
+    print("ALL CAUSAL ENGINE TESTS PASSED!")
