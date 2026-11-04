@@ -60,18 +60,14 @@ export default function DAGViewer({ dagData }) {
             <svg viewBox="0 0 850 480" className="dag-svg">
               <defs>
                 <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                  <path d="M 0 1 L 9 5 L 0 9 z" fill="#3b82f6" opacity="0.8" />
+                  <path d="M 0 1 L 9 5 L 0 9 z" fill="#ffffff" opacity="0.9" />
                 </marker>
                 <marker id="arrow-confounder" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                  <path d="M 0 1 L 9 5 L 0 9 z" fill="#8b5cf6" opacity="0.6" />
+                  <path d="M 0 1 L 9 5 L 0 9 z" fill="#666666" opacity="0.7" />
                 </marker>
                 <marker id="arrow-causal" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-                  <path d="M 0 0 L 10 5 L 0 10 z" fill="#10b981" />
+                  <path d="M 0 0 L 10 5 L 0 10 z" fill="#ffffff" />
                 </marker>
-                <linearGradient id="causal-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#3b82f6" />
-                  <stop offset="100%" stopColor="#10b981" />
-                </linearGradient>
               </defs>
 
               {/* Confounder Nodes (Left Column) */}
@@ -84,20 +80,20 @@ export default function DAGViewer({ dagData }) {
                     <path
                       d={`M 220 ${yPos} C 330 ${yPos}, 340 180, 430 180`}
                       fill="none"
-                      stroke="#8b5cf6"
-                      strokeWidth="1.5"
-                      strokeDasharray="4 3"
-                      opacity="0.45"
+                      stroke="#444444"
+                      strokeWidth="1.2"
+                      strokeDasharray="3 3"
+                      opacity="0.6"
                       markerEnd="url(#arrow-confounder)"
                     />
                     {/* Paths to Outcome */}
                     <path
                       d={`M 220 ${yPos} C 340 ${yPos}, 500 ${yPos}, 670 290`}
                       fill="none"
-                      stroke="#8b5cf6"
+                      stroke="#383838"
                       strokeWidth="1.2"
-                      strokeDasharray="4 3"
-                      opacity="0.35"
+                      strokeDasharray="3 3"
+                      opacity="0.5"
                       markerEnd="url(#arrow-confounder)"
                     />
                     {/* Node Box */}
@@ -106,10 +102,10 @@ export default function DAGViewer({ dagData }) {
                       y={yPos - 22}
                       width="180"
                       height="44"
-                      rx="8"
+                      rx="6"
                       className={`node-rect node-confounder ${isSelected ? 'node-selected' : ''}`}
                     />
-                    <circle cx="58" cy={yPos} r="5" fill="#8b5cf6" />
+                    <circle cx="58" cy={yPos} r="4" fill="#888888" />
                     <text x="74" y={yPos + 5} className="node-text">
                       {node.label}
                     </text>
@@ -124,10 +120,10 @@ export default function DAGViewer({ dagData }) {
                   y="155"
                   width="190"
                   height="52"
-                  rx="10"
+                  rx="6"
                   className={`node-rect node-treatment ${activeNodeInfo?.id === treatment?.id ? 'node-selected' : ''}`}
                 />
-                <circle cx="452" cy="181" r="7" fill="#3b82f6" />
+                <circle cx="452" cy="181" r="5" fill="#ffffff" />
                 <text x="470" y="186" className="node-text node-bold">
                   {treatment?.label}
                 </text>
@@ -137,12 +133,11 @@ export default function DAGViewer({ dagData }) {
               <path
                 d="M 525 207 C 525 270, 600 300, 670 300"
                 fill="none"
-                stroke="url(#causal-grad)"
-                strokeWidth="4"
+                stroke="#ffffff"
+                strokeWidth="2.5"
                 markerEnd="url(#arrow-causal)"
-                className="causal-arrow-pulse"
               />
-              <text x="560" y="245" fill="#10b981" fontSize="11" fontWeight="700">
+              <text x="560" y="245" fill="#ffffff" fontSize="11" fontWeight="600">
                 True Causal Effect (ITE)
               </text>
 
@@ -153,10 +148,10 @@ export default function DAGViewer({ dagData }) {
                   y="270"
                   width="160"
                   height="55"
-                  rx="10"
+                  rx="6"
                   className={`node-rect node-outcome ${activeNodeInfo?.id === outcome?.id ? 'node-selected' : ''}`}
                 />
-                <circle cx="692" cy="297" r="7" fill="#10b981" />
+                <circle cx="692" cy="297" r="5" fill="#ffffff" />
                 <text x="710" y="302" className="node-text node-bold">
                   {outcome?.label}
                 </text>

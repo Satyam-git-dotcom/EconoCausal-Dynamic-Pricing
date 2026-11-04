@@ -47,14 +47,14 @@ export default function PropensityMatchingView({ matchingData, onFetchMatching }
       y: overlap.treated_counts,
       name: 'Treated Cohort (Discounted)',
       type: 'bar',
-      marker: { color: 'rgba(59, 130, 246, 0.75)' }
+      marker: { color: 'rgba(255, 255, 255, 0.85)' }
     },
     {
       x: overlap.bins,
       y: overlap.control_counts,
       name: 'Control Cohort ($0)',
       type: 'bar',
-      marker: { color: 'rgba(16, 185, 129, 0.75)' }
+      marker: { color: 'rgba(100, 100, 100, 0.6)' }
     }
   ];
 

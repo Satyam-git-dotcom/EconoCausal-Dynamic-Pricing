@@ -26,7 +26,7 @@ export default function UpliftCharts({ upliftData, trainingData, onRetrainModel,
   const predUplift = upliftData?.traditional_predictive_ml?.cumulative_uplift || [];
   const randUplift = upliftData?.random_rollout?.cumulative_uplift || [];
 
-  // Qini Plotly Traces
+  // Qini Plotly Traces (Minimalist Monochrome)
   const qiniTraces = [
     {
       x: percentiles,
@@ -34,8 +34,8 @@ export default function UpliftCharts({ upliftData, trainingData, onRetrainModel,
       type: 'scatter',
       mode: 'lines+markers',
       name: `Causal DML (${trainingData?.estimator || 'LightGBM'})`,
-      line: { color: '#10b981', width: 3.5 },
-      marker: { size: 6, color: '#10b981' }
+      line: { color: '#ffffff', width: 3 },
+      marker: { size: 6, color: '#ffffff' }
     },
     {
       x: percentiles,
@@ -43,8 +43,8 @@ export default function UpliftCharts({ upliftData, trainingData, onRetrainModel,
       type: 'scatter',
       mode: 'lines+markers',
       name: 'Standard Predictive ML (Churn/Conversion)',
-      line: { color: '#f43f5e', width: 2.5, dash: 'dot' },
-      marker: { size: 5, color: '#f43f5e' }
+      line: { color: '#888888', width: 2, dash: 'dot' },
+      marker: { size: 5, color: '#888888' }
     },
     {
       x: percentiles,
@@ -52,11 +52,11 @@ export default function UpliftCharts({ upliftData, trainingData, onRetrainModel,
       type: 'scatter',
       mode: 'lines',
       name: 'Random Rollout Benchmark',
-      line: { color: '#64748b', width: 2, dash: 'dash' }
+      line: { color: '#3a3a3a', width: 2, dash: 'dash' }
     }
   ];
 
-  // Cumulative Uplift Traces
+  // Cumulative Uplift Traces (Minimalist Monochrome)
   const upliftTraces = [
     {
       x: percentiles,
@@ -64,8 +64,8 @@ export default function UpliftCharts({ upliftData, trainingData, onRetrainModel,
       type: 'scatter',
       mode: 'lines+markers',
       name: 'Causal DML Incremental Buyers',
-      line: { color: '#3b82f6', width: 3.5 },
-      marker: { size: 6, color: '#3b82f6' }
+      line: { color: '#ffffff', width: 3 },
+      marker: { size: 6, color: '#ffffff' }
     },
     {
       x: percentiles,
@@ -73,8 +73,8 @@ export default function UpliftCharts({ upliftData, trainingData, onRetrainModel,
       type: 'scatter',
       mode: 'lines+markers',
       name: 'Predictive ML Incremental Buyers',
-      line: { color: '#fb923c', width: 2.5, dash: 'dot' },
-      marker: { size: 5, color: '#fb923c' }
+      line: { color: '#888888', width: 2, dash: 'dot' },
+      marker: { size: 5, color: '#888888' }
     },
     {
       x: percentiles,
@@ -82,7 +82,7 @@ export default function UpliftCharts({ upliftData, trainingData, onRetrainModel,
       type: 'scatter',
       mode: 'lines',
       name: 'Random Rollout Baseline',
-      line: { color: '#64748b', width: 2, dash: 'dash' }
+      line: { color: '#3a3a3a', width: 2, dash: 'dash' }
     }
   ];
 
@@ -104,7 +104,9 @@ export default function UpliftCharts({ upliftData, trainingData, onRetrainModel,
     legend: {
       x: 0.02,
       y: 0.98,
-      bgcolor: 'rgba(15, 23, 42, 0.85)'
+      bgcolor: '#0e0e0e',
+      bordercolor: '#222222',
+      borderwidth: 1
     }
   };
 

@@ -385,9 +385,9 @@ export default function OptimizationMatrix({
                         type: 'scatter',
                         mode: 'lines+markers',
                         fill: 'tozeroy',
-                        fillcolor: 'rgba(16, 185, 129, 0.1)',
-                        line: { color: '#10b981', width: 3 },
-                        marker: { size: 6, color: '#10b981' },
+                        fillcolor: 'rgba(255, 255, 255, 0.04)',
+                        line: { color: '#ffffff', width: 2.5 },
+                        marker: { size: 6, color: '#ffffff' },
                         yaxis: 'y1'
                       },
                       {
@@ -396,8 +396,8 @@ export default function OptimizationMatrix({
                         name: 'Marginal ROI (λ* = dProfit / dSpend)',
                         type: 'scatter',
                         mode: 'lines+markers',
-                        line: { color: '#38bdf8', width: 2.5, dash: 'dot' },
-                        marker: { size: 7, color: '#38bdf8', symbol: 'diamond' },
+                        line: { color: '#888888', width: 2, dash: 'dot' },
+                        marker: { size: 6, color: '#aaaaaa', symbol: 'diamond' },
                         yaxis: 'y2'
                       }
                     ]}
@@ -409,18 +409,18 @@ export default function OptimizationMatrix({
                       xaxis: { title: 'Marketing Promotional Budget ($)', tickprefix: '$' },
                       yaxis: {
                         title: 'Total Incremental Profit ($)',
-                        titlefont: { color: '#10b981' },
-                        tickfont: { color: '#10b981' }
+                        titlefont: { color: '#ffffff' },
+                        tickfont: { color: '#cccccc' }
                       },
                       yaxis2: {
                         title: 'Marginal ROI Rate (λ*)',
-                        titlefont: { color: '#38bdf8' },
-                        tickfont: { color: '#38bdf8' },
+                        titlefont: { color: '#888888' },
+                        tickfont: { color: '#888888' },
                         overlaying: 'y',
                         side: 'right',
                         range: [0, Math.max(...sensitivityData.marginal_rois) * 1.25]
                       },
-                      legend: { x: 0.05, y: 0.95, bgcolor: 'rgba(15, 23, 42, 0.85)' }
+                      legend: { x: 0.05, y: 0.95, bgcolor: '#0e0e0e', bordercolor: '#222222', borderwidth: 1 }
                     }}
                   />
                 </div>
