@@ -775,7 +775,7 @@ function Drift() {
 // Master App Component
 export default function App() {
   const [tab, setTab] = useState(0);
-  const [th, setTh] = useState('dark'); // Default to sleek dark monochrome
+  const [th, setTh] = useState('light'); // Default to clean Swiss light monochrome
   const [modal, setModal] = useState(false);
   const [solv, setSolv] = useState(0);
   const [budget, setBudget] = useState(5000);
