@@ -178,9 +178,16 @@ class PrescriptiveOptimizer:
         ml_roi = round(ml_profit / max(ml_spend, 1.0), 2)
         rand_roi = round(rand_profit / max(rand_spend, 1.0), 2)
         
-        # Persuadables captured percentage
-        persuadable_mask = self.df.get("predicted_segment", "") == "Persuadables"
-        persuadables_targeted = sum(1 for i, p in enumerate(prescribed_tiers) if p > 0 and persuadable_mask.iloc[i])
+        # Persuadables captured percentage (robust segment column detection)
+        if "predicted_segment" in self.df.columns:
+            persuadable_mask = self.df["predicted_segment"].astype(str).str.contains("Persuadable", case=False, na=False)
+        elif "true_segment" in self.df.columns:
+            persuadable_mask = self.df["true_segment"].astype(str).str.contains("Persuadable", case=False, na=False)
+        elif "segment" in self.df.columns:
+            persuadable_mask = self.df["segment"].astype(str).str.contains("Persuadable", case=False, na=False)
+        else:
+            persuadable_mask = pd.Series([False] * len(self.df), index=self.df.index)
+        persuadables_targeted = int(sum(1 for i, p in enumerate(prescribed_tiers) if p > 0 and persuadable_mask.iloc[i]))
         
         return {
             "budget": budget,

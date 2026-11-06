@@ -70,15 +70,28 @@ EconoCausal-Infotact/
 - Python 3.10+ (tested on Python 3.12)
 - Node.js 18+ & npm
 
-### 1. Launch FastAPI Backend
+### Option 1: One-Click Local Launcher (Recommended)
+```bash
+./start.sh
+```
+This single command automatically starts both the FastAPI backend (port `8000`) and the Vite React animated UI (port `5173`), and opens the dashboard in your default browser with live animations and backend integration.
+
+### Option 2: Zero-Dependency Standalone HTML Dashboard
+Open `econocausal.html` directly in any web browser without needing any backend server or npm install:
+```bash
+open econocausal.html
+```
+
+### Option 3: Manual Step-by-Step Launch
+1. **Launch FastAPI Backend:**
 ```bash
 cd backend
-python3 -m pip install -r requirements.txt # Or install dowhy, econml, lightgbm, scipy, fastapi, uvicorn
-python3 -m uvicorn app:app --host 0.0.0.0 --port 8000
+python3 -m pip install -r requirements.txt
+python3 -m uvicorn app:app --host 0.0.0.0 --port 8000 --reload
 ```
-Backend API interactive documentation is available at `http://localhost:8000/docs`.
+Interactive API documentation will be available at `http://localhost:8000/docs`.
 
-### 2. Launch Vite React Frontend
+2. **Launch Vite React Frontend:**
 ```bash
 cd frontend
 npm install

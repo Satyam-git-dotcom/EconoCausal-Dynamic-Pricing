@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef, useLayoutEffect } from 'react';
 import './App.css';
 
-const API_BASE = 'http://localhost:8000/api';
+const API_BASE = typeof window !== 'undefined' && window.location.port === '5173' ? '/api' : 'http://localhost:8000/api';
 
 const useReducedMotion = () => {
   const q = '(prefers-reduced-motion: reduce)';
@@ -490,9 +490,21 @@ function Uplift() {
     ['Mobile App', 0.05]
   ];
 
-  const retrain = () => {
+  const retrain = async () => {
     setBusy(true);
     setLoad(true);
+    try {
+      await fetch(`${API_BASE}/train`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          base_estimator: est === 'LightGBM' ? 'lightgbm' : 'random_forest',
+          n_splits: cv
+        })
+      });
+    } catch {
+      // Graceful offline fallback
+    }
     setTimeout(() => setBusy(false), 850);
     setTimeout(() => {
       setLoad(false);
@@ -996,8 +1008,22 @@ function Drift() {
   });
   const bad = rows.some(r => r.psi >= 0.25);
 
-  const go = n => {
+  const go = async n => {
     setBb(n);
+    if (n === 1 || n === 2) {
+      try {
+        await fetch(`${API_BASE}/drift/evaluate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            scenario: n === 1 ? 'economic_downturn' : 'dormancy_spike',
+            batch_size: 1000
+          })
+        });
+      } catch {
+        // Graceful offline fallback
+      }
+    }
     setTimeout(() => {
       setSc(n);
       setBb(null);
@@ -1156,8 +1182,21 @@ export default function App() {
     }, 200);
   };
 
-  const generate = () => {
+  const generate = async () => {
     setGen(true);
+    try {
+      await fetch(`${API_BASE}/dataset/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          n_samples: ds.n,
+          confounding_strength: ds.c,
+          random_seed: ds.seed + 1
+        })
+      });
+    } catch {
+      // Graceful offline fallback
+    }
     setTimeout(() => {
       setGen(false);
       setDs(d => ({ ...d, seed: d.seed + 1 }));

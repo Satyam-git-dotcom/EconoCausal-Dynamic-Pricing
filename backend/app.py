@@ -219,15 +219,20 @@ def get_customers(
     filtered = df.copy()
     
     if segment and segment != "All":
-        col = "predicted_segment" if "predicted_segment" in filtered.columns else "true_segment"
-        filtered = filtered[filtered[col].str.lower() == segment.lower()]
+        seg_candidates = ["predicted_segment", "true_segment", "segment"]
+        col = next((c for c in seg_candidates if c in filtered.columns), None)
+        if col:
+            filtered = filtered[filtered[col].fillna("").astype(str).str.lower() == segment.lower()]
         
     if discount_tier is not None and "optimal_discount" in filtered.columns:
         filtered = filtered[filtered["optimal_discount"] == discount_tier]
         
     if search:
         search_lower = search.lower()
-        filtered = filtered[filtered["customer_id"].str.lower().str.contains(search_lower)]
+        id_candidates = ["customer_id", "id"]
+        id_col = next((c for c in id_candidates if c in filtered.columns), None)
+        if id_col:
+            filtered = filtered[filtered[id_col].fillna("").astype(str).str.lower().str.contains(search_lower, na=False)]
         
     total_count = len(filtered)
     start_idx = (page - 1) * page_size
