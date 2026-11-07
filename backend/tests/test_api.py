@@ -73,6 +73,22 @@ def test_drift_evaluate_endpoint():
     assert "features" in data
     assert len(data["features"]) >= 4
 
+def test_executive_summary_report_endpoints():
+    r_json = client.get("/api/summary")
+    assert r_json.status_code == 200
+    data = r_json.json()
+    assert "markdown_report" in data
+    assert "metrics" in data
+    assert "archetypes" in data
+
+    r_md = client.get("/api/summary?format=markdown")
+    assert r_md.status_code == 200
+    assert "EconoCausal" in r_md.text
+
+    r_dl = client.get("/api/summary/download?format=markdown")
+    assert r_dl.status_code == 200
+    assert "attachment" in r_dl.headers.get("content-disposition", "")
+
 if __name__ == "__main__":
     print("Testing FastAPI Endpoints...")
     test_health_check_endpoint()
@@ -87,4 +103,6 @@ if __name__ == "__main__":
     print("  [✓] Customer matrix pagination passed")
     test_drift_evaluate_endpoint()
     print("  [✓] Drift evaluate endpoint passed")
+    test_executive_summary_report_endpoints()
+    print("  [✓] Executive audit report export endpoints passed")
     print("ALL REST API INTEGRATION TESTS PASSED!")

@@ -92,7 +92,8 @@ def main():
             test_get_dag_endpoint,
             test_optimize_budget_endpoint,
             test_customer_matrix_pagination,
-            test_drift_evaluate_endpoint
+            test_drift_evaluate_endpoint,
+            test_executive_summary_report_endpoints
         )
         test_health_check_endpoint()
         print("   ✔ GET /api/health Service Status: PASSED")
@@ -106,7 +107,9 @@ def main():
         print("   ✔ GET /api/customers Prescription Matrix Pagination: PASSED")
         test_drift_evaluate_endpoint()
         print("   ✔ POST /api/drift/evaluate KS-Test & PSI Detector: PASSED")
-        test_results.append(("FastAPI REST & Drift Detector Suite", "6/6 Tests Passed", "PASS"))
+        test_executive_summary_report_endpoints()
+        print("   ✔ GET /api/summary & /download Audit Report Generation: PASSED")
+        test_results.append(("FastAPI REST & Drift Detector Suite", "7/7 Tests Passed", "PASS"))
     except Exception as e:
         print(f"   ✖ REST API Integration Failed: {e}")
         test_results.append(("FastAPI REST & Drift Detector Suite", str(e), "FAIL"))
@@ -119,7 +122,12 @@ def main():
         print(f"  {status_color} | {suite:<42} | {details}")
     print("-" * 65)
     print(f"  Total Execution Time: {elapsed:.2f} seconds")
-    print(f"  Status: ALL 14 TESTS PASSED (100% SUCCESS)\n")
+    all_passed = all(status == "PASS" for _, _, status in test_results)
+    count_passed = sum(int(details.split("/")[0]) for _, details, status in test_results if status == "PASS")
+    total_tests = sum(int(details.split("/")[1].split()[0]) for _, details, status in test_results if status == "PASS")
+    print(f"  Status: {'ALL ' + str(total_tests) + ' TESTS PASSED (100% SUCCESS)' if all_passed else 'SOME TESTS FAILED'}\n")
+    if not all_passed:
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
