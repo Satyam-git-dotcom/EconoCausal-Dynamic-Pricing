@@ -19,7 +19,7 @@ trap cleanup SIGINT SIGTERM EXIT
 
 # Start backend
 echo "[1/2] Launching FastAPI Backend on http://localhost:8000 ..."
-python3 -m uvicorn app:app --app-dir backend --host 0.0.0.0 --port 8000 --reload &
+MPLCONFIGDIR=/tmp/matplotlib_cache python3 -m uvicorn app:app --app-dir backend --host 0.0.0.0 --port 8000 --reload &
 
 # Start frontend with auto-open
 echo "[2/2] Launching Vite React Animated Dashboard on http://localhost:5173 ..."

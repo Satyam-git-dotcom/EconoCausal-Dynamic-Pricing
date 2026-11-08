@@ -7,6 +7,9 @@ Implements:
 4. Causal Audit: Mathematical refutation tests (Placebo Treatment, Random Common Cause, Data Subset).
 """
 
+import os
+os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib_cache")
+os.makedirs("/tmp/matplotlib_cache", exist_ok=True)
 import numpy as np
 import pandas as pd
 from typing import Dict, Any, List, Tuple, Optional
@@ -164,22 +167,16 @@ class CausalEngine:
         df_treat1[self.treatment_col] = 1
         self.df["predictive_ml_score"] = self.predictive_model.predict_proba(df_treat1)[:, 1].round(4)
         
-        # Segment categorization based on estimated ITE & baseline
-        assigned_segments = []
-        for i, row in self.df.iterrows():
-            ite = row["estimated_ite"]
-            # Estimate user's baseline propensity without discount
-            # From DML: E[Y|X, W, T=0] ~ Y_obs - (ite if treated else 0)
-            if ite > 0.12:
-                assigned_segments.append("Persuadables")
-            elif ite < -0.01:
-                assigned_segments.append("Sleeping Dogs")
-            elif row["predictive_ml_score"] > 0.65:
-                assigned_segments.append("Sure Things")
-            else:
-                assigned_segments.append("Lost Causes")
-                
-        self.df["predicted_segment"] = assigned_segments
+        # Vectorized segment categorization based on estimated ITE & predictive score
+        ite_arr = self.df["estimated_ite"].values
+        score_arr = self.df["predictive_ml_score"].values
+        condlist = [
+            ite_arr > 0.12,
+            ite_arr < -0.01,
+            score_arr > 0.65
+        ]
+        choicelist = ["Persuadables", "Sleeping Dogs", "Sure Things"]
+        self.df["predicted_segment"] = np.select(condlist, choicelist, default="Lost Causes")
         
         # ATE Summary
         ate = float(np.mean(self.ite_estimates))

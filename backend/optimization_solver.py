@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 from typing import Dict, Any, List
 from scipy.optimize import linprog
+import scipy.sparse as sp
 
 class PrescriptiveOptimizer:
     def __init__(self, df: pd.DataFrame):
@@ -69,25 +70,15 @@ class PrescriptiveOptimizer:
         # linprog minimizes c^T x, so c = -profit_matrix.flatten()
         c = -profit_matrix.flatten()
         
-        # Inequality constraint: Sum_i Sum_d x_{i, d} * Cost(i, d) <= budget
-        A_ub = [cost_matrix.flatten()]
+        # Inequality constraint: Sum_i Sum_d x_{i, d} * Cost(i, d) <= budget (sparse)
+        A_ub = sp.csr_matrix([cost_matrix.flatten()])
         b_ub = [budget]
         
-        # Equality constraints: Sum_d x_{i, d} == 1 for each customer i
-        # Construct sparse-friendly constraint matrix
-        row_indices = []
-        col_indices = []
-        data = []
-        for i in range(N):
-            for d in range(D):
-                row_indices.append(i)
-                col_indices.append(i * D + d)
-                data.append(1.0)
-                
-        # Full dense A_eq for linprog
-        A_eq = np.zeros((N, N * D))
-        for r, c_idx, val in zip(row_indices, col_indices, data):
-            A_eq[r, c_idx] = val
+        # Equality constraints: Sum_d x_{i, d} == 1 for each customer i (sparse CSR)
+        row_indices = np.repeat(np.arange(N), D)
+        col_indices = np.arange(N * D)
+        data = np.ones(N * D, dtype=float)
+        A_eq = sp.csr_matrix((data, (row_indices, col_indices)), shape=(N, N * D))
         b_eq = np.ones(N)
         
         bounds = [(0.0, 1.0) for _ in range(N * D)]
@@ -102,10 +93,24 @@ class PrescriptiveOptimizer:
             method="highs"
         )
         
-        x_solution = res.x.reshape((N, D))
+        if res.success and res.x is not None:
+            x_solution = res.x.reshape((N, D))
+            prescribed_tier_idx = np.argmax(x_solution, axis=1)
+        else:
+            # Robust fallback: greedy knapsack ranking by net gain / cost ratio
+            prescribed_tier_idx = np.zeros(N, dtype=int)
+            best_gain_tiers = np.argmax(profit_matrix, axis=1)
+            best_costs = np.array([cost_matrix[i, best_gain_tiers[i]] for i in range(N)])
+            best_profits = np.array([profit_matrix[i, best_gain_tiers[i]] for i in range(N)])
+            roi = best_profits / (best_costs + 1e-6)
+            rank = np.argsort(roi)[::-1]
+            spend_acc = 0.0
+            for idx in rank:
+                if best_profits[idx] > 0 and spend_acc + best_costs[idx] <= budget:
+                    prescribed_tier_idx[idx] = best_gain_tiers[idx]
+                    spend_acc += best_costs[idx]
         
         # Discretize continuous relaxation to argmax tier per customer
-        prescribed_tier_idx = np.argmax(x_solution, axis=1)
         prescribed_tiers = [discount_tiers[idx] for idx in prescribed_tier_idx]
         
         # Compute realized budget and profit for Optimal Strategy

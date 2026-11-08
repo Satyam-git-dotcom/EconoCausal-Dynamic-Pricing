@@ -88,19 +88,19 @@ def generate_retail_dataset(
         ps = price_sensitivity[i]
         
         if b >= 0.62:
-            segments.append("Sure Thing")
+            segments.append("Sure Things")
             true_ite_10[i] = rng.uniform(0.01, 0.04)
             true_ite_20[i] = rng.uniform(0.02, 0.06)
         elif b < 0.10 and ps < 0.50:
-            segments.append("Lost Cause")
+            segments.append("Lost Causes")
             true_ite_10[i] = rng.uniform(0.005, 0.025)
             true_ite_20[i] = rng.uniform(0.01, 0.04)
         elif loyalty_tier[i] == 4 and ps < 0.25 and rng.rand() < 0.4:
-            segments.append("Sleeping Dog")
+            segments.append("Sleeping Dogs")
             true_ite_10[i] = -rng.uniform(0.02, 0.08)
             true_ite_20[i] = -rng.uniform(0.04, 0.12)
         else:
-            segments.append("Persuadable")
+            segments.append("Persuadables")
             true_ite_10[i] = np.clip(0.12 + 0.25 * ps + rng.normal(0, 0.03), 0.08, 0.38)
             true_ite_20[i] = np.clip(true_ite_10[i] + 0.10 + 0.12 * ps + rng.normal(0, 0.02), true_ite_10[i] + 0.04, 0.52)
             
@@ -130,16 +130,11 @@ def generate_retail_dataset(
             
     treatment_binary = (treatment_discount > 0).astype(int)
     
-    actual_conv_prob = np.zeros(n_samples)
-    for i in range(n_samples):
-        tier = treatment_discount[i]
-        if tier == 0:
-            actual_conv_prob[i] = baseline_conv_prob[i]
-        elif tier == 10:
-            actual_conv_prob[i] = baseline_conv_prob[i] + true_ite_10[i]
-        else:
-            actual_conv_prob[i] = baseline_conv_prob[i] + true_ite_20[i]
-            
+    actual_conv_prob = np.where(
+        treatment_discount == 0,
+        baseline_conv_prob,
+        np.where(treatment_discount == 10, baseline_conv_prob + true_ite_10, baseline_conv_prob + true_ite_20)
+    )
     actual_conv_prob = np.clip(actual_conv_prob, 0.005, 0.995)
     conversion = (rng.rand(n_samples) < actual_conv_prob).astype(int)
     
