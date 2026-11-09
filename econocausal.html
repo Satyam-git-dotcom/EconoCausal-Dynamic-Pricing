@@ -101,7 +101,7 @@ svg text{font-family:Archivo,Arial,sans-serif;fill:var(--ink)}
 .dag-node:hover{transform:scale(1.06)}.dag-node:hover rect{stroke-width:2.5px}
 .dag-flowing{stroke-dasharray:6 4!important;animation:flow 1s linear infinite!important;stroke:var(--ink)!important;opacity:1!important}
 .splash-overlay{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;align-items:center;justify-content:center;cursor:pointer;animation:fade .2s ease both}
-.splash-overlay.splash-exit{animation:splashUp .45s var(--out) forwards}
+.splash-overlay.splash-exit{animation:splashUp .45s var(--out) forwards;pointer-events:none}
 @keyframes splashUp{to{transform:translateY(-100%);opacity:0}}
 .splash-content{display:flex;flex-direction:column;align-items:center;gap:20px}
 .splash-logo{width:56px;height:56px;display:grid;grid-template-columns:1fr 1fr;gap:4px}
@@ -139,9 +139,15 @@ const Logo=()=><svg width="26" height="26" viewBox="0 0 26 26"><rect x="1" y="1"
 
 // onExit fires when the slide-up STARTS, so the dashboard mounts (and animates) as the splash lifts instead of behind it
 function Splash({onExit,onDone}){const [ex,setEx]=useState(false);
- useEffect(()=>{const t=setTimeout(()=>setEx(true),1250);return()=>clearTimeout(t)},[]);
- useEffect(()=>{if(!ex)return;onExit();const t=setTimeout(onDone,440);return()=>clearTimeout(t)},[ex]);
- return<div className={'splash-overlay '+(ex?'splash-exit':'')} onClick={()=>setEx(true)} title="Click to skip"><div className="splash-content">
+ const onExitRef=useRef(onExit);const onDoneRef=useRef(onDone);
+ onExitRef.current=onExit;onDoneRef.current=onDone;
+ useEffect(()=>{
+  const t1=setTimeout(()=>{setEx(true);if(onExitRef.current)onExitRef.current();},1250);
+  const t2=setTimeout(()=>{if(onDoneRef.current)onDoneRef.current();},1700);
+  return()=>{clearTimeout(t1);clearTimeout(t2);};
+ },[]);
+ const skip=()=>{setEx(true);if(onExitRef.current)onExitRef.current();setTimeout(()=>{if(onDoneRef.current)onDoneRef.current();},450);};
+ return<div className={'splash-overlay '+(ex?'splash-exit':'')} onClick={skip} title="Click to skip"><div className="splash-content">
  <div className="splash-logo"><div className="splash-sq sq1"/><div className="splash-sq sq2"/><div className="splash-sq sq3"/><div className="splash-sq sq4"/></div>
  <div className="splash-title">{'EconoCausal'.split('').map((c,i)=><span key={i} className="splash-char" style={{'--ci':i}}>{c}</span>)}</div>
  <div className="splash-sub">Causal AI · Dynamic Pricing · Prescriptive Allocation</div></div></div>}
@@ -281,7 +287,7 @@ function Drift(){const [sc,setSc]=useState(0);const [bb,setBb]=useState(null);
  <div className="card flat scroll reveal" style={{'--i':2}}><table><thead><tr><th>Feature</th><th>KS stat</th><th>p-value</th><th>PSI</th><th>Status</th></tr></thead><tbody key={sc}>{rows.map((r,i)=><tr key={r.f} className="reveal" style={{'--i':i,animationDuration:'.35s'}}><td style={{fontWeight:700,color:'var(--ink)'}}>{r.f}</td><td>{r.ks.toFixed(3)}</td><td>{r.p.toFixed(4)}</td><td>{r.psi.toFixed(2)}</td><td><span className={'badge '+(r.st==='Shift'?'f':'')}>{r.st}</span></td></tr>)}</tbody></table></div></div>}
 
 function App(){const reduced=useReducedMotion();
- const [showSplash,setShowSplash]=useState(()=>!reduced);const [ready,setReady]=useState(reduced);
+ const [showSplash,setShowSplash]=useState(()=>!reduced);const [ready,setReady]=useState(true);
  const [tab,setTab]=useState(0);const [th,setTh]=useState('light');const [rot,setRot]=useState(0);
  const [modal,setModal]=useState(false);const [closing,setClosing]=useState(false);const [gen,setGen]=useState(false);
  const [solv,setSolv]=useState(0);const [budget,setBudget]=useState(5000);const [ds,setDs]=useState({n:1000,c:.6,seed:7});const [fn,setFn]=useState('');const [mk,setMk]=useState(0);

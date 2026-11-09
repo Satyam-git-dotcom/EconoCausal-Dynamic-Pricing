@@ -630,6 +630,7 @@ svg text {
 
 .splash-overlay.splash-exit {
   animation: splashUp .45s var(--out) forwards;
+  pointer-events: none;
 }
 
 @keyframes splashUp {

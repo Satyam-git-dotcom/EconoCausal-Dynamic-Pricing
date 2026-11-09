@@ -25,9 +25,6 @@ MPLCONFIGDIR=/tmp/matplotlib_cache python3 -m uvicorn app:app --app-dir backend 
 echo "[2/2] Launching Vite React Animated Dashboard on http://localhost:5173 ..."
 (cd frontend && npm run dev -- --host 0.0.0.0 --port 5173 --open) &
 
-# Ensure browser opens on macOS
-(sleep 1.5 && open http://localhost:5173 2>/dev/null || true) &
-
 echo ""
 echo "=========================================================="
 echo "  ✅ Both Services Are Running with Full Motion UI!"

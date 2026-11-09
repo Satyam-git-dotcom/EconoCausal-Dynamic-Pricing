@@ -84,23 +84,37 @@ const Logo = () => (
 // onExit fires when the slide-up STARTS, so the dashboard mounts (and animates) as the splash lifts instead of behind it
 function Splash({ onExit, onDone }) {
   const [ex, setEx] = useState(false);
+  const onExitRef = useRef(onExit);
+  const onDoneRef = useRef(onDone);
+  onExitRef.current = onExit;
+  onDoneRef.current = onDone;
 
   useEffect(() => {
-    const t = setTimeout(() => setEx(true), 1250);
-    return () => clearTimeout(t);
+    const t1 = setTimeout(() => {
+      setEx(true);
+      if (onExitRef.current) onExitRef.current();
+    }, 1250);
+    const t2 = setTimeout(() => {
+      if (onDoneRef.current) onDoneRef.current();
+    }, 1700);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
   }, []);
 
-  useEffect(() => {
-    if (!ex) return;
-    onExit();
-    const t = setTimeout(onDone, 440);
-    return () => clearTimeout(t);
-  }, [ex, onExit, onDone]);
+  const skip = () => {
+    setEx(true);
+    if (onExitRef.current) onExitRef.current();
+    setTimeout(() => {
+      if (onDoneRef.current) onDoneRef.current();
+    }, 450);
+  };
 
   return (
     <div
       className={'splash-overlay ' + (ex ? 'splash-exit' : '')}
-      onClick={() => setEx(true)}
+      onClick={skip}
       title="Click to skip"
     >
       <div className="splash-content">
@@ -348,6 +362,13 @@ Conditioning on all 6 observed confounders (Annual Income, Loyalty Tier, Recency
     setTimeout(() => setMsg(''), 4000);
     setExp(null);
   };
+
+  const kpis = [
+    ['Net Incremental Profit', np],
+    ['Capital Deployed', cd, 'of $5,000 budget'],
+    ['Realized ROI', ro],
+    ['Cannibalization Prevented', ws]
+  ];
 
   const headline = 'EconoCausal strategy captures $10,022 net profit and prevents $4,200 in wasted spend.';
 
@@ -1235,7 +1256,7 @@ function Drift() {
 export default function App() {
   const reduced = useReducedMotion();
   const [showSplash, setShowSplash] = useState(() => !reduced);
-  const [ready, setReady] = useState(reduced);
+  const [ready, setReady] = useState(true);
   const [tab, setTab] = useState(0);
   const [th, setTh] = useState('light');
   const [rot, setRot] = useState(0);
