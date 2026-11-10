@@ -89,6 +89,44 @@ def test_executive_summary_report_endpoints():
     assert r_dl.status_code == 200
     assert "attachment" in r_dl.headers.get("content-disposition", "")
 
+def test_dag_node_inspection_endpoint():
+    # Test Confounder Node inspection
+    r_conf = client.get("/api/dag/inspect/annual_income_k")
+    assert r_conf.status_code == 200
+    data_conf = r_conf.json()
+    assert data_conf["role"] == "Confounder (Observed)"
+    assert data_conf["backdoor_status"] == "BLOCKED"
+    assert "independence_test" in data_conf
+    assert "confounding_bias_removed" in data_conf["independence_test"]
+
+    # Test Treatment Node inspection
+    r_treat = client.get("/api/dag/inspect/treatment_binary")
+    assert r_treat.status_code == 200
+    data_treat = r_treat.json()
+    assert "Treatment" in data_treat["role"]
+    assert "causal_dml_ate" in data_treat["independence_test"]
+
+    # Test Outcome Node inspection
+    r_out = client.get("/api/dag/inspect/conversion")
+    assert r_out.status_code == 200
+    data_out = r_out.json()
+    assert "Outcome" in data_out["role"]
+
+def test_upload_dataset_endpoint():
+    # Construct a sample CSV with custom column aliases
+    csv_data = (
+        "income,tier,recency,visits,discounts,app,discount,converted\n"
+        + "\n".join([f"{50 + (i % 30)},{1 + (i % 4)},{10 + (i % 60)},{5 + (i % 15)},0.25,{i % 2},{10 if i % 2 == 1 else 0},{1 if i % 3 == 0 else 0}" for i in range(120)])
+    )
+    files = {"file": ("test_custom_customers.csv", csv_data.encode("utf-8"), "text/csv")}
+    r_upload = client.post("/api/dataset/upload", files=files)
+    assert r_upload.status_code == 200
+    data = r_upload.json()
+    assert data["status"] == "uploaded_and_trained"
+    assert data["records"] == 120
+    assert "training" in data
+    assert "optimal_strategy" in data
+
 if __name__ == "__main__":
     print("Testing FastAPI Endpoints...")
     test_health_check_endpoint()
@@ -97,6 +135,10 @@ if __name__ == "__main__":
     print("  [✓] Dataset endpoint passed")
     test_get_dag_endpoint()
     print("  [✓] DAG endpoint passed")
+    test_dag_node_inspection_endpoint()
+    print("  [✓] DAG node inspection endpoint passed")
+    test_upload_dataset_endpoint()
+    print("  [✓] CSV upload & retraining endpoint passed")
     test_optimize_budget_endpoint()
     print("  [✓] Optimize budget endpoint passed")
     test_customer_matrix_pagination()

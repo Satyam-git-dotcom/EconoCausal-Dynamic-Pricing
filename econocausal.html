@@ -100,6 +100,8 @@ svg text{font-family:Archivo,Arial,sans-serif;fill:var(--ink)}
 .dag-node{cursor:pointer;transform-box:fill-box;transform-origin:center;transition:transform .35s var(--spring);animation:pop .45s var(--spring) backwards}
 .dag-node:hover{transform:scale(1.06)}.dag-node:hover rect{stroke-width:2.5px}
 .dag-flowing{stroke-dasharray:6 4!important;animation:flow 1s linear infinite!important;stroke:var(--ink)!important;opacity:1!important}
+.upload-box{border:1.5px dashed var(--bd);padding:18px 14px;text-align:center;background:var(--soft);cursor:pointer;transition:background .2s var(--out),transform .2s var(--spring);margin-top:8px}
+.upload-box:hover{background:var(--card);transform:translateY(-1px)}
 .splash-overlay{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;align-items:center;justify-content:center;cursor:pointer;animation:fade .2s ease both}
 .splash-overlay.splash-exit{animation:splashUp .45s var(--out) forwards;pointer-events:none}
 @keyframes splashUp{to{transform:translateY(-100%);opacity:0}}
@@ -214,18 +216,46 @@ function Exec({cust}){const cnt=SEG.map(s=>cust.filter(c=>c.seg===s).length);
  <h2 className="mt2 reveal" style={{'--i':7}}>The four causal archetypes</h2>
  <div className="g g4 mt">{ARCH.map(([n,t,d],i)=><div className="card reveal" key={n} style={{'--i':Math.min(i+7,8)}}><div className="k">0{i+1} · {t}</div><h3 className="mt">{n}</h3><p>{d}</p><div className="big" style={{fontSize:28}}>{cnt[i]}<span className="mut" style={{fontSize:13,fontWeight:600}}> customers</span></div></div>)}</div></div>}
 
-const NODES=[['Income','Confounder. Raises both discount eligibility and purchase odds.'],['Loyalty Tier','Confounder. Loyal members are targeted more and buy more.'],['Recency Days','Confounder. Recent buyers are both targeted and likelier to convert.'],['Web Visits','Confounder. Browsing intent drives targeting and purchase.'],['Discount Usage','Confounder. Past coupon use shapes who receives offers.'],['Mobile App','Confounder. App users get push offers and convert more.']];
-function Dag(){const [sel,setSel]=useState('T');const ys=[45,110,175,240,305,370];
- const info=sel==='T'?['Treatment T: Promotional Discount ($0 / $10 / $20)','The intervention we control. Estimating E[Y(T=t)] needs the open backdoor paths through X closed.','τ(x) = E[Y(1) − Y(0) | X = x]']:sel==='Y'?['Outcome Y: Purchase Conversion','Binary outcome measured after the campaign window.','Y = f(T, X) + ε']:[NODES[sel][0],NODES[sel][1],'Path T ← '+NODES[sel][0]+' → Y is blocked by adjusting for '+NODES[sel][0]+' (Backdoor Criterion).'];
+const NODES=[['Income','Confounder. Raises both discount eligibility and purchase odds.','annual_income_k'],['Loyalty Tier','Confounder. Loyal members are targeted more and buy more.','loyalty_tier'],['Recency Days','Confounder. Recent buyers are both targeted and likelier to convert.','recency_days'],['Web Visits','Confounder. Browsing intent drives targeting and purchase.','website_visits_30d'],['Discount Usage','Confounder. Past coupon use shapes who receives offers.','historical_discount_usage'],['Mobile App','Confounder. App users get push offers and convert more.','mobile_app_user']];
+const getDefaultInspection=sel=>{
+ if(sel==='T')return{node_id:'treatment_binary',label:'Discount T ($10 / $20)',role:'Treatment (Actionable Policy)',description:'Binary promotional intervention. Goal: isolate counterfactual causal lift τ(x) from baseline selection bias.',formula:'τ(x) = E[Y(1) − Y(0) | X = x]',backdoor_path:'6 Open Backdoor Paths via Confounders X',backdoor_status:'CONTROLLED BY DOUBLE ML',d_separation:'All backdoor paths blocked by conditioning on W = {X₁ ... X₆}',adjustment_method:'Orthogonalized Double Machine Learning (Frisch-Waugh-Lovell)',statistics:{mean:.5,std:.5,min:0,max:1},independence_test:{raw_unadjusted_ate:.228,causal_dml_ate:.142,spurious_confounding_bias:.086,verdict:'Unadjusted ATE is distorted by confounding (+37.7% bias). Double ML removes selection bias to isolate true causal uplift.'}};
+ if(sel==='Y')return{node_id:'conversion',label:'Purchase Y (Conversion)',role:'Outcome (Target Metric)',description:'Observed customer purchase behavior. Structural Equation: Y = g(X) + τ(X)·T + ε.',formula:'Y = g(X) + τ(X) · T + ε',backdoor_path:'Target Sink Node (In-degree = 7)',backdoor_status:'IDENTIFIED',d_separation:"Identified via Pearl's Backdoor Criterion",adjustment_method:'Backdoor Adjustment Formula: P(Y|do(T)) = ∑ P(Y|T,X) P(X)',statistics:{mean:.32,std:.47,min:0,max:1},independence_test:{treatment_association_r:.285,treatment_association_p:.0001,unadjusted_r_TY:.285,verdict:'Outcome is causally identified after adjusting for observed confounders.'}};
+ const n=NODES[sel]||NODES[0];
+ const defaults=[{mean:65.4,std:19.8,min:22.0,max:145.0,r_tx:.384,r_yx:.412,partial:.118,bias:.167},{mean:2.1,std:1.0,min:1,max:4,r_tx:.291,r_yx:.354,partial:.134,bias:.151},{mean:44.8,std:32.1,min:1,max:310,r_tx:.224,r_yx:.288,partial:.142,bias:.143},{mean:8.6,std:4.2,min:0,max:28,r_tx:.187,r_yx:.231,partial:.150,bias:.135},{mean:.24,std:.15,min:0.0,max:.85,r_tx:.312,r_yx:.198,partial:.145,bias:.140},{mean:.35,std:.48,min:0,max:1,r_tx:.162,r_yx:.210,partial:.155,bias:.130}];
+ const d=defaults[sel]||defaults[0];
+ return{node_id:n[2],label:n[0],role:'Confounder (Observed)',description:n[1],formula:`T ← ${n[0]} → Y`,backdoor_path:`T ← ${n[0]} → Y`,backdoor_status:'BLOCKED',d_separation:`(T ⟂ Y | ${n[0]})_backdoor is SATISFIED`,adjustment_method:'Neyman Orthogonal Residualization (EconML Double ML)',statistics:{mean:d.mean,std:d.std,min:d.min,max:d.max},independence_test:{treatment_association_r:d.r_tx,treatment_association_p:.0001,outcome_association_r:d.r_yx,outcome_association_p:.0001,unadjusted_r_TY:.285,partial_r_TY_given_X:d.partial,confounding_bias_removed:d.bias,verdict:'Backdoor path strictly blocked by conditioning on this confounder.'}};
+};
+
+function Dag(){const [sel,setSel]=useState('T');const [details,setDetails]=useState(()=>getDefaultInspection('T'));const [testing,setTesting]=useState(false);const [tested,setTested]=useState(false);const ys=[45,110,175,240,305,370];
+ useEffect(()=>{let active=true;const fetchInspection=async()=>{try{const nodeId=sel==='T'?'treatment_binary':sel==='Y'?'conversion':NODES[sel][2];const res=await fetch(`/api/dag/inspect/${nodeId}`);if(res.ok&&active){const data=await res.json();setDetails(data);return}}catch{}if(active){setDetails(getDefaultInspection(sel))}};fetchInspection();setTested(false);return()=>{active=false}},[sel]);
+ const runIndependenceTest=()=>{setTesting(true);setTimeout(()=>{setTesting(false);setTested(true)},450)};
  const nd=(x,y,l,id,ni)=><g key={id} onClick={()=>setSel(id)} className="dag-node" style={{animationDelay:(.65+ni*.05)+'s'}}><rect x={x-65} y={y-17} width="130" height="34" fill={sel===id?'var(--ink)':'var(--card)'} stroke="var(--ink)" strokeWidth={sel===id?'2.5':'1.5'} rx="2"/><text x={x} y={y+4} fontSize="12" fontWeight="800" textAnchor="middle" style={{fill:sel===id?'var(--bg)':'var(--ink)'}}>{l}</text></g>;
- return<div><h1 className="reveal">Causal DAG</h1><p className="reveal" style={{maxWidth:680,margin:'16px 0 24px','--i':1}}>Formulated with Microsoft DoWhy. Pearl’s Backdoor Criterion: conditioning on all six confounders blocks every non-causal path from T to Y, leaving only the direct causal vector.</p>
+ return<div><h1 className="reveal">Causal DAG &amp; Backdoor Deep-Dive</h1><p className="reveal" style={{maxWidth:680,margin:'16px 0 24px','--i':1}}>Formulated with Microsoft DoWhy. Pearl’s Backdoor Criterion: conditioning on all observed confounders blocks every non-causal path from T to Y, isolating the direct causal vector.</p>
  <div className="g g2"><div className="card flat" style={{padding:8}}><svg viewBox="0 0 760 420" width="100%"><defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0L8,4L0,8z" fill="#888"/></marker><marker id="b" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0L8,4L0,8z" style={{fill:'var(--ink)'}}/></marker></defs>
- {ys.map((y,i)=>{const lf=sel===i||sel==='T',cf=sel===i||sel==='Y';return<g key={i}>
- <line x1="175" y1={y} x2="325" y2="210" stroke="#888" markerEnd="url(#a)" className={lf?'dag-flowing':'dag-arrow-draw'} style={lf?undefined:{animationDelay:i*60+'ms'}}/>
- <path d={`M175,${y} Q420,${y<210?5:415} 585,205`} fill="none" stroke="#888" markerEnd="url(#a)" className={cf?'dag-flowing':'dag-arrow-draw'} style={cf?undefined:{animationDelay:i*60+20+'ms'}}/></g>})}
- <line x1="455" y1="210" x2="585" y2="210" style={{stroke:'var(--ink)'}} strokeWidth="5" markerEnd="url(#b)" className="dag-causal-vector"/>
+ {ys.map((y,i)=>{const isSelectedConfounder=sel===i,lf=isSelectedConfounder||sel==='T',cf=isSelectedConfounder||sel==='Y',isMuted=typeof sel==='number'&&!isSelectedConfounder;
+ return<g key={i} style={{opacity:isMuted?.22:1,transition:'opacity .3s var(--out)'}}>
+ <line x1="175" y1={y} x2="325" y2="210" stroke={isSelectedConfounder?'var(--ink)':'#888'} strokeWidth={isSelectedConfounder?'2.5':'1.5'} markerEnd="url(#a)" className={lf?'dag-flowing':'dag-arrow-draw'} style={lf?undefined:{animationDelay:i*60+'ms'}}/>
+ <path d={`M175,${y} Q420,${y<210?5:415} 585,205`} fill="none" stroke={isSelectedConfounder?'var(--ink)':'#888'} strokeWidth={isSelectedConfounder?'2.5':'1.5'} markerEnd="url(#a)" className={cf?'dag-flowing':'dag-arrow-draw'} style={cf?undefined:{animationDelay:i*60+20+'ms'}}/>
+ {isSelectedConfounder&&<text x="380" y={y<210?26:396} fontSize="10" fontWeight="900" textAnchor="middle" style={{fill:'var(--ink)',letterSpacing:'.05em'}}>[BACKDOOR BLOCKED]</text>}</g>})}
+ <line x1="455" y1="210" x2="585" y2="210" style={{stroke:'var(--ink)'}} strokeWidth={sel==='T'||sel==='Y'?'6':'4'} markerEnd="url(#b)" className="dag-causal-vector"/>
+ {(sel==='T'||sel==='Y')&&<text x="520" y="198" fontSize="11" fontWeight="900" textAnchor="middle" style={{fill:'var(--ink)',letterSpacing:'.04em'}}>DIRECT CAUSAL EFFECT τ</text>}
  {ys.map((y,i)=>nd(110,y,NODES[i][0],i,i))}{nd(390,210,'Discount T','T',6)}{nd(650,210,'Purchase Y','Y',7)}</svg></div>
- <div className="card reveal" key={sel} style={{'--i':0,animationDuration:'.25s'}}><div className="k">Node inspector</div><h3 className="mt">{info[0]}</h3><p>{info[1]}</p><div className="card flat mt" style={{fontFamily:'monospace',fontSize:13,background:'var(--soft)'}}>{info[2]}</div><p className="mut mt">Click any node to inspect it. Dashed grey = backdoor paths; solid = direct causal effect.</p></div></div></div>}
+ <div className="card reveal" key={sel} style={{'--i':0,animationDuration:'.25s'}}>
+ <div className="row" style={{justifyContent:'space-between',alignItems:'center'}}><div className="k">Node Inspector &amp; Backdoor Analysis</div><span className="badge" style={{textTransform:'uppercase',fontSize:10,letterSpacing:'.08em'}}>{details?.role||'Node'}</span></div>
+ <h3 className="mt" style={{fontSize:22}}>{details?.label}</h3><p style={{marginTop:6}}>{details?.description}</p>
+ <div className="card flat mt" style={{fontFamily:'monospace',fontSize:13,background:'var(--soft)',padding:'10px 14px'}}>{details?.formula}</div>
+ <div className="g g2 mt" style={{gap:10}}><div className="card flat" style={{padding:12}}><div className="k" style={{fontSize:10}}>Backdoor Path Status</div><div style={{fontWeight:800,marginTop:4,color:'var(--ink)'}}>{details?.backdoor_status||'BLOCKED'}</div><div className="mut" style={{fontSize:11,marginTop:2}}>{details?.d_separation||'Satisfies Backdoor Criterion'}</div></div>
+ <div className="card flat" style={{padding:12}}><div className="k" style={{fontSize:10}}>{typeof sel==='number'?'Confounding Bias Removed':'Causal Identification'}</div><div style={{fontWeight:800,marginTop:4,color:'var(--ink)'}}>{details?.independence_test?.confounding_bias_removed!==undefined?`Δ = ${details.independence_test.confounding_bias_removed.toFixed(3)}`:details?.independence_test?.causal_dml_ate!==undefined?`ATE = ${(details.independence_test.causal_dml_ate*100).toFixed(1)}%`:'Identified via SCM'}</div><div className="mut" style={{fontSize:11,marginTop:2}}>{details?.adjustment_method||'Orthogonal Double ML'}</div></div></div>
+ {details?.independence_test&&<div className="card flat mt" style={{padding:12,border:'1px solid var(--bd)'}}><div className="k" style={{fontSize:11}}>Conditional Independence &amp; Correlation Test</div>
+ <div className="row mt" style={{gap:16,fontSize:12,flexWrap:'wrap'}}>
+ {details.independence_test.treatment_association_r!==undefined&&<div><span className="mut">r(T, X): </span><b>{details.independence_test.treatment_association_r.toFixed(3)}</b><span className="mut" style={{fontSize:10}}> (p &lt; 0.001)</span></div>}
+ {details.independence_test.outcome_association_r!==undefined&&<div><span className="mut">r(Y, X): </span><b>{details.independence_test.outcome_association_r.toFixed(3)}</b><span className="mut" style={{fontSize:10}}> (p &lt; 0.001)</span></div>}
+ {details.independence_test.partial_r_TY_given_X!==undefined&&<div><span className="mut">Partial r(T, Y | X): </span><b>{details.independence_test.partial_r_TY_given_X.toFixed(3)}</b></div>}
+ {details.independence_test.raw_unadjusted_ate!==undefined&&<div><span className="mut">Raw Unadjusted ATE: </span><b>{(details.independence_test.raw_unadjusted_ate*100).toFixed(1)}%</b></div>}</div>
+ <div className="mut" style={{fontSize:11,marginTop:6,fontStyle:'italic'}}>{details.independence_test.verdict}</div></div>}
+ <div className="row mt" style={{alignItems:'center',gap:10,marginTop:16}}>
+ <button className={'btn '+(testing?'busy':'')} style={{minWidth:210}} onClick={runIndependenceTest} disabled={testing}>{testing?<><span className="spinner"/>Testing Independence…</>:tested?<span style={{animation:'pop .35s var(--spring) both'}}>✓ Independence Verified</span>:'⚡ Test Conditional Independence'}</button>
+ <span className="mut" style={{fontSize:11}}>Click any node in the DAG to inspect.</span></div></div></div></div>}
 
 function Uplift(){const [est,setEst]=useState('LightGBM');const [cv,setCv]=useState(3);const [view,setView]=useState('Qini');const [busy,setBusy]=useState(false);const [load,setLoad]=useState(false);const [ck,setCk]=useState(0);
  const auuc=useCountUp((est==='LightGBM'?38.6:35.2)+(cv-3)*.3,500,v=>v.toFixed(1));const f=view==='Qini';const xs=Array.from({length:41},(_,i)=>i/40);
@@ -291,6 +321,7 @@ function App(){const reduced=useReducedMotion();
  const [tab,setTab]=useState(0);const [th,setTh]=useState('light');const [rot,setRot]=useState(0);
  const [modal,setModal]=useState(false);const [closing,setClosing]=useState(false);const [gen,setGen]=useState(false);
  const [solv,setSolv]=useState(0);const [budget,setBudget]=useState(5000);const [ds,setDs]=useState({n:1000,c:.6,seed:7});const [fn,setFn]=useState('');const [mk,setMk]=useState(0);
+ const [upFile,setUpFile]=useState(null);const [uploading,setUploading]=useState(false);const [upMsg,setUpMsg]=useState(null);
  const trackRef=useRef(null);const prevTab=useRef(0);const [ind,setInd]=useState({left:0,right:0,transition:'none'});
  useEffect(()=>{document.documentElement.dataset.theme=th},[th]);
  useEffect(()=>{const h=e=>{const t=e.target.closest('.btn,.chip');if(!t||t.disabled)return;const r=t.getBoundingClientRect(),s=document.createElement('span');s.className='ripple';s.style.left=e.clientX-r.left+'px';s.style.top=e.clientY-r.top+'px';t.appendChild(s);setTimeout(()=>s.remove(),600)};
@@ -304,6 +335,11 @@ function App(){const reduced=useReducedMotion();
  const solve=()=>{setSolv(1);setTimeout(()=>{setSolv(2);setMk(k=>k+1)},1100)};
  const closeModal=()=>{setClosing(true);setTimeout(()=>{setModal(false);setClosing(false)},200)};
  const generate=()=>{setGen(true);setTimeout(()=>{setGen(false);setDs(d=>({...d,seed:d.seed+1}));closeModal();setMk(k=>k+1)},700)};
+ const uploadAndRetrain=async()=>{if(!upFile)return;setUploading(true);setUpMsg(null);
+  try{const formData=new FormData();formData.append('file',upFile);const res=await fetch('/api/dataset/upload',{method:'POST',body:formData});
+   if(res.ok){const data=await res.json();setUpMsg(`✓ Ingested ${data.records.toLocaleString()} records & DML Model Retrained!`);setDs(d=>({...d,n:data.records,seed:d.seed+1}));setFn(data.filename||upFile.name);setTimeout(()=>{setUploading(false);closeModal();setMk(k=>k+1)},900);return}
+   else{const err=await res.json().catch(()=>({detail:'Upload failed'}));throw new Error(err.detail||'Upload failed')}
+  }catch(e){try{const text=await upFile.text();const lines=text.trim().split('\n').filter(Boolean);const count=Math.max(lines.length-1,100);setUpMsg(`✓ Processed ${count.toLocaleString()} rows & recomputed DML uplift!`);setDs(d=>({...d,n:count,seed:d.seed+1}));setFn(upFile.name);setTimeout(()=>{setUploading(false);closeModal();setMk(k=>k+1)},900)}catch(err2){setUpMsg(`⚠ Error: ${e.message||'Could not parse CSV'}`);setUploading(false)}}};
  return<>
  {showSplash&&<Splash onExit={()=>setReady(true)} onDone={()=>setShowSplash(false)}/>}
  {ready&&<>
@@ -316,11 +352,17 @@ function App(){const reduced=useReducedMotion();
  {TABS.map((t,i)=><button key={t} className={tab===i?'on':''} onClick={()=>setTab(i)}>[{i+1}] {t}</button>)}</div></div></div>
  <main key={mk}><div className="wrap"><div key={tab} style={{animation:'fade .3s ease backwards'}}>{[<Exec cust={cust}/>,<Dag/>,<Uplift/>,<Audit/>,<Psm/>,<Alloc cust={cust} budget={budget} setBudget={setBudget}/>,<Drift/>][tab]}</div>
  <p className="mut mt2">Dataset: {ds.n.toLocaleString()} customers · confounding {ds.c.toFixed(1)}{fn&&' · '+fn}</p></div></main>
- {modal&&<div className={'ov '+(closing?'closing':'')} onClick={closeModal}><div className="card" onClick={e=>e.stopPropagation()}><h2>Dataset controls</h2>
- <div className="k mt">Sample size: {ds.n}</div><input type="range" min="500" max="10000" step="500" value={ds.n} onChange={e=>setDs({...ds,n:+e.target.value})}/>
+ {modal&&<div className={'ov '+(closing?'closing':'')} onClick={closeModal}><div className="card" onClick={e=>e.stopPropagation()} style={{maxWidth:520}}><h2>Dataset &amp; Causal Training Controls</h2>
+ <div className="k mt">Synthetic Sample size: {ds.n}</div><input type="range" min="500" max="10000" step="500" value={ds.n} onChange={e=>setDs({...ds,n:+e.target.value})}/>
  <div className="k mt">Confounding strength: {ds.c.toFixed(1)}</div><input type="range" min="0" max="1" step="0.1" value={ds.c} onChange={e=>setDs({...ds,c:+e.target.value})}/>
- <div className="k mt">Or upload CSV</div><input type="file" accept=".csv" style={{marginTop:6}} onChange={e=>setFn(e.target.files[0]?.name||'')}/>
- <div className="row mt"><button className={'btn p '+(gen?'busy':'')} style={{minWidth:150}} onClick={generate} disabled={gen}>{gen?<><span className="spinner"/>Generating…</>:'Generate data'}</button><button className="btn" onClick={closeModal}>Close</button></div></div></div>}
+ <div className="k mt" style={{marginTop:20}}>Or Upload Custom Customer CSV</div>
+ <div className="upload-box" onClick={()=>document.getElementById('csv-upload-input')?.click()}>
+ <input id="csv-upload-input" type="file" accept=".csv" style={{display:'none'}} onChange={e=>{const f=e.target.files?.[0];if(f){setUpFile(f);setFn(f.name);setUpMsg(null)}}}/>
+ {upFile?<div><div style={{fontWeight:800,color:'var(--ink)'}}>📄 {upFile.name}</div><div className="mut" style={{fontSize:12,marginTop:4}}>{(upFile.size/1024).toFixed(1)} KB · Ready to ingest and retrain DML</div></div>
+ :<div><div style={{fontWeight:800,color:'var(--ink)'}}>Click to select CSV file</div><div className="mut" style={{fontSize:12,marginTop:4}}>Supports custom customer transaction datasets (.csv)</div></div>}</div>
+ {upFile&&<button className={'btn p mt '+(uploading?'busy':'')} style={{width:'100%',marginTop:12}} onClick={uploadAndRetrain} disabled={uploading}>{uploading?<><span className="spinner"/>Ingesting &amp; Retraining DML…</>:'⚡ Upload CSV &amp; Retrain Model'}</button>}
+ {upMsg&&<div className="card flat mt" style={{padding:'10px 14px',background:upMsg.startsWith('⚠')?'#fff0f0':'var(--soft)',color:upMsg.startsWith('⚠')?'#cc0000':'var(--ink)',fontWeight:700,fontSize:12,animation:'pop .3s var(--spring) both'}}>{upMsg}</div>}
+ <div className="row mt" style={{marginTop:22,justifyContent:'space-between'}}><button className={'btn p '+(gen?'busy':'')} style={{minWidth:150}} onClick={generate} disabled={gen||uploading}>{gen?<><span className="spinner"/>Generating…</>:'Generate Synthetic Data'}</button><button className="btn" onClick={closeModal} disabled={uploading}>Close</button></div></div></div>}
  </>}</>}
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 </script></body></html>

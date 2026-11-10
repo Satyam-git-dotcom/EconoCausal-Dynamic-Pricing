@@ -90,6 +90,8 @@ def main():
             test_health_check_endpoint,
             test_get_dataset_endpoint,
             test_get_dag_endpoint,
+            test_dag_node_inspection_endpoint,
+            test_upload_dataset_endpoint,
             test_optimize_budget_endpoint,
             test_customer_matrix_pagination,
             test_drift_evaluate_endpoint,
@@ -101,6 +103,10 @@ def main():
         print("   ✔ GET /api/dataset Observational Cohorts: PASSED")
         test_get_dag_endpoint()
         print("   ✔ GET /api/dag Graph Topology & Backdoor Nodes: PASSED")
+        test_dag_node_inspection_endpoint()
+        print("   ✔ GET /api/dag/inspect/{node} Conditional Independence & Backdoors: PASSED")
+        test_upload_dataset_endpoint()
+        print("   ✔ POST /api/dataset/upload Custom CSV Ingestion & DML Retraining: PASSED")
         test_optimize_budget_endpoint()
         print("   ✔ POST /api/optimize Multi-tier Knapsack LP: PASSED")
         test_customer_matrix_pagination()
@@ -109,7 +115,7 @@ def main():
         print("   ✔ POST /api/drift/evaluate KS-Test & PSI Detector: PASSED")
         test_executive_summary_report_endpoints()
         print("   ✔ GET /api/summary & /download Audit Report Generation: PASSED")
-        test_results.append(("FastAPI REST & Drift Detector Suite", "7/7 Tests Passed", "PASS"))
+        test_results.append(("FastAPI REST & Drift Detector Suite", "9/9 Tests Passed", "PASS"))
     except Exception as e:
         print(f"   ✖ REST API Integration Failed: {e}")
         test_results.append(("FastAPI REST & Drift Detector Suite", str(e), "FAIL"))

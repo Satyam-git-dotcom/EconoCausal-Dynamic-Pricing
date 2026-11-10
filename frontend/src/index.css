@@ -345,6 +345,21 @@ tbody tr:hover {
   color: var(--bg);
 }
 
+.upload-box {
+  border: 1.5px dashed var(--bd);
+  padding: 18px 14px;
+  text-align: center;
+  background: var(--soft);
+  cursor: pointer;
+  transition: background .2s var(--out), border-color .2s var(--out), transform .2s var(--spring);
+  margin-top: 8px;
+}
+
+.upload-box:hover {
+  background: var(--card);
+  transform: translateY(-1px);
+}
+
 input[type=range] {
   -webkit-appearance: none;
   appearance: none;
