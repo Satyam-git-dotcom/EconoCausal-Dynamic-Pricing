@@ -31,14 +31,14 @@ def main():
     # 1. Dataset & Causal Engine Tests
     print("\n[1/3] Running Causal Engine & EconML Double ML Tests...")
     try:
+        from dataset_generator import generate_retail_dataset
         from tests.test_causal_engine import (
-            sample_dataset,
             test_dataset_generation_properties,
             test_causal_dag_specification,
             test_double_ml_training_convergence,
             test_uplift_curves_calculation
         )
-        ds = sample_dataset()
+        ds = generate_retail_dataset(n_samples=500, confounding_strength=0.8, random_seed=42)
         test_dataset_generation_properties(ds)
         print("   ✔ Synthetic Observational Dataset Confounding: PASSED")
         test_causal_dag_specification(ds)
