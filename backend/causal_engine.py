@@ -16,6 +16,18 @@ from typing import Dict, Any, List, Tuple, Optional
 import warnings
 warnings.filterwarnings("ignore")
 
+# Fix pydot 3.0+ compatibility with networkx nx_pydot.from_pydot
+# (networkx calls P.get_strict(None), which fails in pydot>=3.0 unless get_strict accepts args)
+try:
+    import pydot
+    def _compat_get_strict(self, *args, **kwargs):
+        return getattr(self, "strict", False)
+    pydot.Graph.get_strict = _compat_get_strict
+    if hasattr(pydot, "Dot"):
+        pydot.Dot.get_strict = _compat_get_strict
+except Exception:
+    pass
+
 import dowhy
 from dowhy import CausalModel
 from econml.dml import LinearDML, CausalForestDML
@@ -262,12 +274,21 @@ class CausalEngine:
         Builds DoWhy causal model and identifies causal estimand via backdoor criterion.
         """
         dag_spec = self.get_dag_specification()
-        self.dowhy_model = CausalModel(
-            data=self.df,
-            treatment=self.treatment_col,
-            outcome=self.outcome_col,
-            graph=dag_spec["dot_graph"]
-        )
+        try:
+            self.dowhy_model = CausalModel(
+                data=self.df,
+                treatment=self.treatment_col,
+                outcome=self.outcome_col,
+                graph=dag_spec["dot_graph"]
+            )
+        except Exception:
+            # Fallback to direct common_causes list if dot_graph parsing encounters environment issues
+            self.dowhy_model = CausalModel(
+                data=self.df,
+                treatment=self.treatment_col,
+                outcome=self.outcome_col,
+                common_causes=self.confounders
+            )
         self.identified_estimand = self.dowhy_model.identify_effect(proceed_when_unidentifiable=True)
         return self.dowhy_model
 

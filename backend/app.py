@@ -12,6 +12,17 @@ starlette.routing.Router.__init__ = lambda self, *a, **kw: _orig_router_init(
     self, *a, **{k: v for k, v in kw.items() if k not in ("on_startup", "on_shutdown")}
 )
 
+# Fix pydot 3.0+ compatibility with networkx nx_pydot.from_pydot
+try:
+    import pydot
+    def _compat_get_strict(self, *args, **kwargs):
+        return getattr(self, "strict", False)
+    pydot.Graph.get_strict = _compat_get_strict
+    if hasattr(pydot, "Dot"):
+        pydot.Dot.get_strict = _compat_get_strict
+except Exception:
+    pass
+
 from fastapi import FastAPI, HTTPException, UploadFile, File, Response, Query
 from datetime import datetime, timezone
 import json
