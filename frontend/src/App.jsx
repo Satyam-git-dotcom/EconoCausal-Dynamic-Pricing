@@ -3,6 +3,80 @@ import './App.css';
 
 const API_BASE = typeof window !== 'undefined' && window.location.port === '5173' ? '/api' : 'http://localhost:8000/api';
 
+// Minimalist Flat Vector Icons (matching the Swiss monochrome theme)
+const IconFileText = ({ size = 14, style = {} }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    style={{ display: 'inline-block', verticalAlign: '-2px', flexShrink: 0, ...style }}
+  >
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+    <polyline points="14 2 14 8 20 8" />
+    <line x1="16" y1="13" x2="8" y2="13" />
+    <line x1="16" y1="17" x2="8" y2="17" />
+    <line x1="10" y1="9" x2="8" y2="9" />
+  </svg>
+);
+
+const IconFileJson = ({ size = 14, style = {} }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    style={{ display: 'inline-block', verticalAlign: '-2px', flexShrink: 0, ...style }}
+  >
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+    <polyline points="14 2 14 8 20 8" />
+    <path d="M10 12a1 1 0 0 0-1 1v1a1 1 0 0 1-1 1 1 1 0 0 1 1 1v1a1 1 0 0 0 1 1" />
+    <path d="M14 18a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1 1 1 0 0 1-1-1v-1a1 1 0 0 0-1-1" />
+  </svg>
+);
+
+const IconZap = ({ size = 14, style = {} }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    stroke="currentColor"
+    strokeWidth="1"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    style={{ display: 'inline-block', verticalAlign: '-2px', flexShrink: 0, ...style }}
+  >
+    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+  </svg>
+);
+
+const IconUpload = ({ size = 14, style = {} }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    style={{ display: 'inline-block', verticalAlign: '-2px', flexShrink: 0, ...style }}
+  >
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+    <polyline points="17 8 12 3 7 8" />
+    <line x1="12" y1="3" x2="12" y2="15" />
+  </svg>
+);
+
 const useReducedMotion = () => {
   const q = '(prefers-reduced-motion: reduce)';
   const [r, setR] = useState(() => (typeof window !== 'undefined' ? window.matchMedia(q).matches : false));
@@ -418,7 +492,10 @@ Conditioning on all 6 observed confounders (Annual Income, Loyalty Tier, Recency
                 Generating…
               </>
             ) : (
-              '📄 Export Audit Report (.md)'
+              <>
+                <IconFileText size={15} style={{ marginRight: 8 }} />
+                Export Audit Report (.md)
+              </>
             )}
           </button>
           <button
@@ -433,7 +510,10 @@ Conditioning on all 6 observed confounders (Annual Income, Loyalty Tier, Recency
                 Exporting…
               </>
             ) : (
-              '📦 Export Summary (.json)'
+              <>
+                <IconFileJson size={15} style={{ marginRight: 8 }} />
+                Export Summary (.json)
+              </>
             )}
           </button>
           {msg && <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--mut)', animation: 'pop .35s var(--spring) both' }}>{msg}</span>}
@@ -631,17 +711,17 @@ function Dag() {
       key={id}
       onClick={() => setSel(id)}
       className="dag-node"
-      style={{ animationDelay: 0.65 + ni * 0.05 + 's' }}
+      style={{ animationDelay: (0.05 + ni * 0.04) + 's' }}
     >
       <rect
-        x={x - 65}
+        x={x - 60}
         y={y - 17}
-        width="130"
+        width="120"
         height="34"
         fill={sel === id ? 'var(--ink)' : 'var(--card)'}
         stroke="var(--ink)"
         strokeWidth={sel === id ? '2.5' : '1.5'}
-        rx="2"
+        rx="3"
       />
       <text
         x={x}
@@ -667,11 +747,11 @@ function Dag() {
         <div className="card flat" style={{ padding: 8 }}>
           <svg viewBox="0 0 760 420" width="100%">
             <defs>
-              <marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
-                <path d="M0,0L8,4L0,8z" fill="#888" />
+              <marker id="a" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+                <path d="M0,0L7,3.5L0,7z" fill="#888" />
               </marker>
-              <marker id="b" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
-                <path d="M0,0L8,4L0,8z" style={{ fill: 'var(--ink)' }} />
+              <marker id="b" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+                <path d="M0,0L7,3.5L0,7z" style={{ fill: 'var(--ink)' }} />
               </marker>
             </defs>
             {ys.map((y, i) => {
@@ -682,29 +762,29 @@ function Dag() {
               return (
                 <g key={i} style={{ opacity: isMuted ? 0.22 : 1, transition: 'opacity .3s var(--out)' }}>
                   <line
-                    x1="175"
+                    x1="165"
                     y1={y}
-                    x2="325"
+                    x2="270"
                     y2="210"
                     stroke={isSelectedConfounder ? 'var(--ink)' : '#888'}
                     strokeWidth={isSelectedConfounder ? '2.5' : '1.5'}
                     markerEnd="url(#a)"
                     className={lf ? 'dag-flowing' : 'dag-arrow-draw'}
-                    style={lf ? undefined : { animationDelay: i * 60 + 'ms' }}
+                    style={lf ? undefined : { animationDelay: (0.35 + i * 0.04) + 's' }}
                   />
                   <path
-                    d={`M175,${y} Q420,${y < 210 ? 5 : 415} 585,205`}
+                    d={`M165,${y} Q390,${y < 210 ? 10 : 410} 615,205`}
                     fill="none"
                     stroke={isSelectedConfounder ? 'var(--ink)' : '#888'}
                     strokeWidth={isSelectedConfounder ? '2.5' : '1.5'}
                     markerEnd="url(#a)"
                     className={cf ? 'dag-flowing' : 'dag-arrow-draw'}
-                    style={cf ? undefined : { animationDelay: i * 60 + 20 + 'ms' }}
+                    style={cf ? undefined : { animationDelay: (0.38 + i * 0.04) + 's' }}
                   />
                   {isSelectedConfounder && (
                     <text
-                      x="380"
-                      y={y < 210 ? 26 : 396}
+                      x="390"
+                      y={y < 210 ? 25 : 395}
                       fontSize="10"
                       fontWeight="900"
                       textAnchor="middle"
@@ -717,30 +797,46 @@ function Dag() {
               );
             })}
             <line
-              x1="455"
+              x1="390"
               y1="210"
-              x2="585"
+              x2="615"
               y2="210"
               style={{ stroke: 'var(--ink)' }}
-              strokeWidth={sel === 'T' || sel === 'Y' ? '6' : '4'}
+              strokeWidth={sel === 'T' || sel === 'Y' ? '5' : '3'}
               markerEnd="url(#b)"
               className="dag-causal-vector"
             />
-            {(sel === 'T' || sel === 'Y') && (
+            <g
+              className="dag-causal-label"
+              style={{
+                opacity: sel === 'T' || sel === 'Y' ? 1 : 0.75,
+                transition: 'all .3s var(--out)'
+              }}
+            >
+              <rect
+                x="425"
+                y="164"
+                width="155"
+                height="22"
+                rx="3"
+                fill="var(--card)"
+                stroke={sel === 'T' || sel === 'Y' ? 'var(--ink)' : 'var(--mut)'}
+                strokeWidth={sel === 'T' || sel === 'Y' ? '1.5' : '1'}
+              />
               <text
-                x="520"
-                y="198"
-                fontSize="11"
-                fontWeight="900"
+                x="502.5"
+                y="179"
+                fontSize="10"
+                fontWeight="800"
                 textAnchor="middle"
-                style={{ fill: 'var(--ink)', letterSpacing: '.04em' }}
+                style={{ fill: sel === 'T' || sel === 'Y' ? 'var(--ink)' : 'var(--mut)', letterSpacing: '.06em' }}
               >
-                DIRECT CAUSAL EFFECT τ
+                DIRECT CAUSAL EFFECT (τ)
               </text>
-            )}
-            {ys.map((y, i) => nd(110, y, NODES[i][0], i, i))}
-            {nd(390, 210, 'Discount T', 'T', 6)}
-            {nd(650, 210, 'Purchase Y', 'Y', 7)}
+            </g>
+            {ys.map((y, i) => nd(105, y, NODES[i][0], i, i))}
+            {nd(330, 210, 'Discount T', 'T', 6)}
+            {nd(675, 210, 'Purchase Y', 'Y', 7)}
           </svg>
         </div>
         <div className="card reveal" key={sel} style={{ '--i': 0, animationDuration: '.25s' }}>
@@ -841,7 +937,10 @@ function Dag() {
               ) : tested ? (
                 <span style={{ animation: 'pop .35s var(--spring) both' }}>✓ Independence Verified</span>
               ) : (
-                '⚡ Test Conditional Independence'
+                <>
+                  <IconZap size={14} style={{ marginRight: 8 }} />
+                  Test Conditional Independence
+                </>
               )}
             </button>
             <span className="mut" style={{ fontSize: 11 }}>
@@ -1094,7 +1193,10 @@ function Audit() {
                   : 'Bootstrapping Subsets…'}
               </>
             ) : (
-              '⚡ Run DoWhy Causal Audit'
+              <>
+                <IconZap size={14} style={{ marginRight: 8 }} />
+                Run DoWhy Causal Audit
+              </>
             )}
           </button>
         </div>
@@ -1996,7 +2098,10 @@ export default function App() {
                   />
                   {upFile ? (
                     <div>
-                      <div style={{ fontWeight: 800, color: 'var(--ink)' }}>📄 {upFile.name}</div>
+                      <div style={{ fontWeight: 800, color: 'var(--ink)' }}>
+                        <IconFileText size={15} style={{ marginRight: 6 }} />
+                        {upFile.name}
+                      </div>
                       <div className="mut" style={{ fontSize: 12, marginTop: 4 }}>
                         {(upFile.size / 1024).toFixed(1)} KB · Ready to ingest and retrain DML
                       </div>
@@ -2024,7 +2129,10 @@ export default function App() {
                         Ingesting & Retraining DML…
                       </>
                     ) : (
-                      '⚡ Upload CSV & Retrain Model'
+                      <>
+                        <IconUpload size={15} style={{ marginRight: 8 }} />
+                        Upload CSV & Retrain Model
+                      </>
                     )}
                   </button>
                 )}

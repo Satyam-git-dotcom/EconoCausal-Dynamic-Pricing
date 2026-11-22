@@ -93,10 +93,10 @@ svg text{font-family:Archivo,Arial,sans-serif;fill:var(--ink)}
 .brand:hover svg rect:nth-child(1){transform:translate(-2px,-2px)}.brand:hover svg rect:nth-child(2){transform:translate(2px,-2px) rotate(8deg)}.brand:hover svg rect:nth-child(3){transform:translate(2px,2px)}.brand:hover svg rect:nth-child(4){transform:translate(-2px,2px)}
 .card-sheen{position:relative;overflow:hidden}
 .card-sheen::after{content:"";position:absolute;top:0;left:0;bottom:0;width:60%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.22),transparent);transform:translateX(-120%) skewX(-20deg);animation:sheen 1.3s var(--out) 1s 1 forwards;pointer-events:none}
-.dag-arrow-draw{stroke-dasharray:6 4;animation:dagDraw .65s var(--out) both}
+.dag-arrow-draw{stroke-dasharray:6 4;animation:dagDraw .55s var(--out) both}
 @keyframes dagDraw{from{stroke-dashoffset:180;opacity:0}to{stroke-dashoffset:0;opacity:.8}}
-.dag-causal-vector{stroke-dasharray:200;animation:dagVec .55s var(--out) .45s both}
-@keyframes dagVec{from{stroke-dashoffset:200;opacity:0}to{stroke-dashoffset:0;opacity:1}}
+.dag-causal-vector{stroke-dasharray:240;animation:dagVec .55s var(--out) .5s both}
+@keyframes dagVec{from{stroke-dashoffset:240;opacity:0}to{stroke-dashoffset:0;opacity:1}}
 .dag-node{cursor:pointer;transform-box:fill-box;transform-origin:center;transition:transform .35s var(--spring);animation:pop .45s var(--spring) backwards}
 .dag-node:hover{transform:scale(1.06)}.dag-node:hover rect{stroke-width:2.5px}
 .dag-flowing{stroke-dasharray:6 4!important;animation:flow 1s linear infinite!important;stroke:var(--ink)!important;opacity:1!important}
@@ -138,6 +138,10 @@ const SEG=['Persuadables','Sure Things','Lost Causes','Sleeping Dogs'];
 const ARCH=[['Persuadables','τ > 0.15','Convert only if discounted. Target with an optimal $10 or $20 discount.'],['Sure Things','τ ≈ 0 · baseline > 0.65','Buy at full price anyway. Suppress ($0) to protect margin.'],['Lost Causes','τ ≈ 0 · baseline < 0.15','Won’t buy either way. Suppress ($0) to avoid wasted budget.'],['Sleeping Dogs','τ < 0','Discount lowers purchase odds. Strictly exclude ($0).']];
 const TABS=['Executive ROI','Causal DAG','Double ML & Uplift','Causal Audit','Propensity Matching','Prescriptive Allocation','Drift Monitor'];
 const Logo=()=><svg width="26" height="26" viewBox="0 0 26 26"><rect x="1" y="1" width="11" height="11" fill="var(--ink)"/><rect x="14" y="1" width="11" height="11" fill="var(--mut)" opacity=".45"/><rect x="14" y="14" width="11" height="11" fill="var(--ink)"/><rect x="1" y="14" width="11" height="11" fill="none" stroke="var(--ink)" strokeWidth="2"/></svg>;
+const IconFileText=({size=14,style={}})=><svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:'inline-block',verticalAlign:'-2px',flexShrink:0,...style}}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>;
+const IconFileJson=({size=14,style={}})=><svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:'inline-block',verticalAlign:'-2px',flexShrink:0,...style}}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M10 12a1 1 0 0 0-1 1v1a1 1 0 0 1-1 1 1 1 0 0 1 1 1v1a1 1 0 0 0 1 1"/><path d="M14 18a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1 1 1 0 0 1-1-1v-1a1 1 0 0 0-1-1"/></svg>;
+const IconZap=({size=14,style={}})=><svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" style={{display:'inline-block',verticalAlign:'-2px',flexShrink:0,...style}}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>;
+const IconUpload=({size=14,style={}})=><svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:'inline-block',verticalAlign:'-2px',flexShrink:0,...style}}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>;
 
 // onExit fires when the slide-up STARTS, so the dashboard mounts (and animates) as the splash lifts instead of behind it
 function Splash({onExit,onDone}){const [ex,setEx]=useState(false);
@@ -202,10 +206,10 @@ function Exec({cust}){const cnt=SEG.map(s=>cust.filter(c=>c.seg===s).length);
  <p className="reveal" style={{maxWidth:640,marginTop:18,'--i':1}}>Standard ML predicts who will buy and hands discounts to Sure Things. Double ML estimates the counterfactual effect τ — will this customer convert if, and only if, discounted?</p>
  <div className="row mt reveal" style={{'--i':2,marginTop:22,gap:12}}>
   <button className={'btn p '+(exp==='markdown'?'busy':'')} onClick={()=>downloadReport('markdown')} disabled={!!exp} title="Download comprehensive executive audit report as Markdown">
-   {exp==='markdown'?<><span className="spinner"/>Generating…</>:'📄 Export Audit Report (.md)'}
+   {exp==='markdown'?<><span className="spinner"/>Generating…</>:<><IconFileText size={15} style={{marginRight:8}}/>Export Audit Report (.md)</>}
   </button>
   <button className={'btn '+(exp==='json'?'busy':'')} onClick={()=>downloadReport('json')} disabled={!!exp} title="Download full executive metrics as JSON">
-   {exp==='json'?<><span className="spinner"/>Exporting…</>:'📦 Export Summary (.json)'}
+   {exp==='json'?<><span className="spinner"/>Exporting…</>:<><IconFileJson size={15} style={{marginRight:8}}/>Export Summary (.json)</>}
   </button>
   {msg&&<span style={{fontSize:12,fontWeight:700,color:'var(--mut)',animation:'pop .35s var(--spring) both'}}>{msg}</span>}
  </div></div>
@@ -229,17 +233,17 @@ const getDefaultInspection=sel=>{
 function Dag(){const [sel,setSel]=useState('T');const [details,setDetails]=useState(()=>getDefaultInspection('T'));const [testing,setTesting]=useState(false);const [tested,setTested]=useState(false);const ys=[45,110,175,240,305,370];
  useEffect(()=>{let active=true;const fetchInspection=async()=>{try{const nodeId=sel==='T'?'treatment_binary':sel==='Y'?'conversion':NODES[sel][2];const res=await fetch(`/api/dag/inspect/${nodeId}`);if(res.ok&&active){const data=await res.json();setDetails(data);return}}catch{}if(active){setDetails(getDefaultInspection(sel))}};fetchInspection();setTested(false);return()=>{active=false}},[sel]);
  const runIndependenceTest=()=>{setTesting(true);setTimeout(()=>{setTesting(false);setTested(true)},450)};
- const nd=(x,y,l,id,ni)=><g key={id} onClick={()=>setSel(id)} className="dag-node" style={{animationDelay:(.65+ni*.05)+'s'}}><rect x={x-65} y={y-17} width="130" height="34" fill={sel===id?'var(--ink)':'var(--card)'} stroke="var(--ink)" strokeWidth={sel===id?'2.5':'1.5'} rx="2"/><text x={x} y={y+4} fontSize="12" fontWeight="800" textAnchor="middle" style={{fill:sel===id?'var(--bg)':'var(--ink)'}}>{l}</text></g>;
+ const nd=(x,y,l,id,ni)=><g key={id} onClick={()=>setSel(id)} className="dag-node" style={{animationDelay:(.05+ni*.04)+'s'}}><rect x={x-60} y={y-17} width="120" height="34" fill={sel===id?'var(--ink)':'var(--card)'} stroke="var(--ink)" strokeWidth={sel===id?'2.5':'1.5'} rx="3"/><text x={x} y={y+4} fontSize="12" fontWeight="800" textAnchor="middle" style={{fill:sel===id?'var(--bg)':'var(--ink)'}}>{l}</text></g>;
  return<div><h1 className="reveal">Causal DAG &amp; Backdoor Deep-Dive</h1><p className="reveal" style={{maxWidth:680,margin:'16px 0 24px','--i':1}}>Formulated with Microsoft DoWhy. Pearl’s Backdoor Criterion: conditioning on all observed confounders blocks every non-causal path from T to Y, isolating the direct causal vector.</p>
- <div className="g g2"><div className="card flat" style={{padding:8}}><svg viewBox="0 0 760 420" width="100%"><defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0L8,4L0,8z" fill="#888"/></marker><marker id="b" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0L8,4L0,8z" style={{fill:'var(--ink)'}}/></marker></defs>
+ <div className="g g2"><div className="card flat" style={{padding:8}}><svg viewBox="0 0 760 420" width="100%"><defs><marker id="a" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0L7,3.5L0,7z" fill="#888"/></marker><marker id="b" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0L7,3.5L0,7z" style={{fill:'var(--ink)'}}/></marker></defs>
  {ys.map((y,i)=>{const isSelectedConfounder=sel===i,lf=isSelectedConfounder||sel==='T',cf=isSelectedConfounder||sel==='Y',isMuted=typeof sel==='number'&&!isSelectedConfounder;
  return<g key={i} style={{opacity:isMuted?.22:1,transition:'opacity .3s var(--out)'}}>
- <line x1="175" y1={y} x2="325" y2="210" stroke={isSelectedConfounder?'var(--ink)':'#888'} strokeWidth={isSelectedConfounder?'2.5':'1.5'} markerEnd="url(#a)" className={lf?'dag-flowing':'dag-arrow-draw'} style={lf?undefined:{animationDelay:i*60+'ms'}}/>
- <path d={`M175,${y} Q420,${y<210?5:415} 585,205`} fill="none" stroke={isSelectedConfounder?'var(--ink)':'#888'} strokeWidth={isSelectedConfounder?'2.5':'1.5'} markerEnd="url(#a)" className={cf?'dag-flowing':'dag-arrow-draw'} style={cf?undefined:{animationDelay:i*60+20+'ms'}}/>
- {isSelectedConfounder&&<text x="380" y={y<210?26:396} fontSize="10" fontWeight="900" textAnchor="middle" style={{fill:'var(--ink)',letterSpacing:'.05em'}}>[BACKDOOR BLOCKED]</text>}</g>})}
- <line x1="455" y1="210" x2="585" y2="210" style={{stroke:'var(--ink)'}} strokeWidth={sel==='T'||sel==='Y'?'6':'4'} markerEnd="url(#b)" className="dag-causal-vector"/>
- {(sel==='T'||sel==='Y')&&<text x="520" y="198" fontSize="11" fontWeight="900" textAnchor="middle" style={{fill:'var(--ink)',letterSpacing:'.04em'}}>DIRECT CAUSAL EFFECT τ</text>}
- {ys.map((y,i)=>nd(110,y,NODES[i][0],i,i))}{nd(390,210,'Discount T','T',6)}{nd(650,210,'Purchase Y','Y',7)}</svg></div>
+ <line x1="165" y1={y} x2="270" y2="210" stroke={isSelectedConfounder?'var(--ink)':'#888'} strokeWidth={isSelectedConfounder?'2.5':'1.5'} markerEnd="url(#a)" className={lf?'dag-flowing':'dag-arrow-draw'} style={lf?undefined:{animationDelay:(.35+i*.04)+'s'}}/>
+ <path d={`M165,${y} Q390,${y<210?10:410} 615,205`} fill="none" stroke={isSelectedConfounder?'var(--ink)':'#888'} strokeWidth={isSelectedConfounder?'2.5':'1.5'} markerEnd="url(#a)" className={cf?'dag-flowing':'dag-arrow-draw'} style={cf?undefined:{animationDelay:(.38+i*.04)+'s'}}/>
+ {isSelectedConfounder&&<text x="390" y={y<210?25:395} fontSize="10" fontWeight="900" textAnchor="middle" style={{fill:'var(--ink)',letterSpacing:'.05em'}}>[BACKDOOR BLOCKED]</text>}</g>})}
+ <line x1="390" y1="210" x2="615" y2="210" style={{stroke:'var(--ink)'}} strokeWidth={sel==='T'||sel==='Y'?'5':'3'} markerEnd="url(#b)" className="dag-causal-vector"/>
+ <g className="dag-causal-label" style={{opacity:sel==='T'||sel==='Y'?1:.75,transition:'all .3s var(--out)'}}><rect x="425" y="164" width="155" height="22" rx="3" fill="var(--card)" stroke={sel==='T'||sel==='Y'?'var(--ink)':'var(--mut)'} strokeWidth={sel==='T'||sel==='Y'?'1.5':'1'}/><text x="502.5" y="179" fontSize="10" fontWeight="800" textAnchor="middle" style={{fill:sel==='T'||sel==='Y'?'var(--ink)':'var(--mut)',letterSpacing:'.06em'}}>DIRECT CAUSAL EFFECT (τ)</text></g>
+ {ys.map((y,i)=>nd(105,y,NODES[i][0],i,i))}{nd(330,210,'Discount T','T',6)}{nd(675,210,'Purchase Y','Y',7)}</svg></div>
  <div className="card reveal" key={sel} style={{'--i':0,animationDuration:'.25s'}}>
  <div className="row" style={{justifyContent:'space-between',alignItems:'center'}}><div className="k">Node Inspector &amp; Backdoor Analysis</div><span className="badge" style={{textTransform:'uppercase',fontSize:10,letterSpacing:'.08em'}}>{details?.role||'Node'}</span></div>
  <h3 className="mt" style={{fontSize:22}}>{details?.label}</h3><p style={{marginTop:6}}>{details?.description}</p>
@@ -254,7 +258,7 @@ function Dag(){const [sel,setSel]=useState('T');const [details,setDetails]=useSt
  {details.independence_test.raw_unadjusted_ate!==undefined&&<div><span className="mut">Raw Unadjusted ATE: </span><b>{(details.independence_test.raw_unadjusted_ate*100).toFixed(1)}%</b></div>}</div>
  <div className="mut" style={{fontSize:11,marginTop:6,fontStyle:'italic'}}>{details.independence_test.verdict}</div></div>}
  <div className="row mt" style={{alignItems:'center',gap:10,marginTop:16}}>
- <button className={'btn '+(testing?'busy':'')} style={{minWidth:210}} onClick={runIndependenceTest} disabled={testing}>{testing?<><span className="spinner"/>Testing Independence…</>:tested?<span style={{animation:'pop .35s var(--spring) both'}}>✓ Independence Verified</span>:'⚡ Test Conditional Independence'}</button>
+ <button className={'btn '+(testing?'busy':'')} style={{minWidth:210}} onClick={runIndependenceTest} disabled={testing}>{testing?<><span className="spinner"/>Testing Independence…</>:tested?<span style={{animation:'pop .35s var(--spring) both'}}>✓ Independence Verified</span>:<><IconZap size={14} style={{marginRight:8}}/>Test Conditional Independence</>}</button>
  <span className="mut" style={{fontSize:11}}>Click any node in the DAG to inspect.</span></div></div></div></div>}
 
 function Uplift(){const [est,setEst]=useState('LightGBM');const [cv,setCv]=useState(3);const [view,setView]=useState('Qini');const [busy,setBusy]=useState(false);const [load,setLoad]=useState(false);const [ck,setCk]=useState(0);
@@ -292,7 +296,7 @@ function Audit(){
   <div className="row" style={{justifyContent:'space-between',alignItems:'flex-start',flexWrap:'wrap',gap:16}}>
    <div><h1 className="reveal">Causal Audit &amp; Refutation Suite</h1>
    <p className="reveal" style={{maxWidth:680,margin:'14px 0 0','--i':1}}>Formal Popperian falsification battery implemented via <strong>Microsoft DoWhy</strong>. Mathematically verifies whether the estimated treatment effect is robust to hidden confounders, white noise, and sample perturbations.</p></div>
-   <div className="reveal" style={{'--i':1}}><button className={'btn p '+(auditing?'busy':'')} style={{minWidth:220,transition:'all .3s var(--spring)'}} onClick={executeAudit} disabled={auditing}>{auditing?<><span className="spinner"/>{stage===1?'Testing Placebo…':stage===2?'Injecting Confounder…':'Bootstrapping Subsets…'}</>:'⚡ Run DoWhy Causal Audit'}</button></div>
+   <div className="reveal" style={{'--i':1}}><button className={'btn p '+(auditing?'busy':'')} style={{minWidth:220,transition:'all .3s var(--spring)'}} onClick={executeAudit} disabled={auditing}>{auditing?<><span className="spinner"/>{stage===1?'Testing Placebo…':stage===2?'Injecting Confounder…':'Bootstrapping Subsets…'}</>:<><IconZap size={14} style={{marginRight:8}}/>Run DoWhy Causal Audit</>}</button></div>
   </div>
   <div className={'ban mt reveal '+(allPassed?'':'warn')} style={{'--i':2,display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:12}}>
    <div><span style={{fontWeight:800}}>{allPassed?'✓ Certified Causal Inference Pipeline':'⚠ Audit Warning — Tolerance Threshold Exceeded'}</span><span className="mut" style={{marginLeft:8}}>(All 3 DoWhy Refutations {allPassed?'Passed':'Evaluated'} · Last run: {lastRun})</span></div>
@@ -387,9 +391,9 @@ function App(){const reduced=useReducedMotion();
  <div className="k mt" style={{marginTop:20}}>Or Upload Custom Customer CSV</div>
  <div className="upload-box" onClick={()=>document.getElementById('csv-upload-input')?.click()}>
  <input id="csv-upload-input" type="file" accept=".csv" style={{display:'none'}} onChange={e=>{const f=e.target.files?.[0];if(f){setUpFile(f);setFn(f.name);setUpMsg(null)}}}/>
- {upFile?<div><div style={{fontWeight:800,color:'var(--ink)'}}>📄 {upFile.name}</div><div className="mut" style={{fontSize:12,marginTop:4}}>{(upFile.size/1024).toFixed(1)} KB · Ready to ingest and retrain DML</div></div>
+ {upFile?<div><div style={{fontWeight:800,color:'var(--ink)'}}><IconFileText size={15} style={{marginRight:6}}/>{upFile.name}</div><div className="mut" style={{fontSize:12,marginTop:4}}>{(upFile.size/1024).toFixed(1)} KB · Ready to ingest and retrain DML</div></div>
  :<div><div style={{fontWeight:800,color:'var(--ink)'}}>Click to select CSV file</div><div className="mut" style={{fontSize:12,marginTop:4}}>Supports custom customer transaction datasets (.csv)</div></div>}</div>
- {upFile&&<button className={'btn p mt '+(uploading?'busy':'')} style={{width:'100%',marginTop:12}} onClick={uploadAndRetrain} disabled={uploading}>{uploading?<><span className="spinner"/>Ingesting &amp; Retraining DML…</>:'⚡ Upload CSV &amp; Retrain Model'}</button>}
+ {upFile&&<button className={'btn p mt '+(uploading?'busy':'')} style={{width:'100%',marginTop:12}} onClick={uploadAndRetrain} disabled={uploading}>{uploading?<><span className="spinner"/>Ingesting &amp; Retraining DML…</>:<><IconUpload size={15} style={{marginRight:8}}/>Upload CSV &amp; Retrain Model</>}</button>}
  {upMsg&&<div className="card flat mt" style={{padding:'10px 14px',background:upMsg.startsWith('⚠')?'#fff0f0':'var(--soft)',color:upMsg.startsWith('⚠')?'#cc0000':'var(--ink)',fontWeight:700,fontSize:12,animation:'pop .3s var(--spring) both'}}>{upMsg}</div>}
  <div className="row mt" style={{marginTop:22,justifyContent:'space-between'}}><button className={'btn p '+(gen?'busy':'')} style={{minWidth:150}} onClick={generate} disabled={gen||uploading}>{gen?<><span className="spinner"/>Generating…</>:'Generate Synthetic Data'}</button><button className="btn" onClick={closeModal} disabled={uploading}>Close</button></div></div></div>}
  </>}</>}
