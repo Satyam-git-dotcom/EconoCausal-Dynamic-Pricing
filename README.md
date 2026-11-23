@@ -123,95 +123,48 @@ Open `http://localhost:5173` in your browser.
 
 ## 🔬 Mathematical Foundations
 
-Below are the core econometric and prescriptive mathematical formulations powering EconoCausal, presented in both visual card form and readable mathematical notation.
+Below are the core econometric and prescriptive mathematical formulations powering EconoCausal, presented as visual formula cards with technical specifications.
 
 ### 1. Causal Identification & Pearl's Backdoor Criterion (Week 1)
 
-Observational data confounds the relationship between treatment $T$ (discount) and outcome $Y$ (conversion/revenue) through pre-treatment covariates $W$ (e.g., income, loyalty, browsing history). To isolate the unconfounded interventional distribution $P(Y \mid \mathrm{do}(T = t))$, we apply **Pearl's Backdoor Criterion**: conditioning on the set of observed confounders $W$ blocks all spurious non-causal paths from $T$ to $Y$.
+Observational retail data confounds the relationship between treatment $T$ (discount) and outcome $Y$ (conversion/revenue) through pre-treatment customer covariates $W$ (income, loyalty, browsing history). To isolate the unconfounded interventional distribution $P(Y \mid \mathrm{do}(T = t))$, we apply **Pearl's Backdoor Criterion**: conditioning on observed confounders $W$ blocks all spurious non-causal backdoor paths from $T$ to $Y$.
 
 <p align="center">
   <img src="docs/formulas/formula_backdoor_cate.svg" alt="Pearl Backdoor Criterion & Causal Identification" width="850"/>
 </p>
 
-<details>
-<summary><b>View Plaintext & LaTeX Equations</b></summary>
-
-```math
-P(Y \mid \mathrm{do}(T = t)) = \sum_{w} P(Y \mid T = t, W = w) \cdot P(W = w)
-```
-
-```math
-\tau(x) = \mathbb{E}[Y(1) - Y(0) \mid X = x] = \mathbb{E}[Y \mid \mathrm{do}(T=1), X=x] - \mathbb{E}[Y \mid \mathrm{do}(T=0), X=x]
-```
-
 - **Backdoor Adjustment:** Weights conditional outcomes by the marginal distribution of confounders $W$ to eliminate selection bias.
-- **Counterfactual CATE $\tau(x)$:** Measures the expected individual incremental lift for a customer with feature vector $X = x$.
-</details>
+- **Counterfactual CATE $\tau(x)$:** Measures the expected individual treatment effect for a customer with feature vector $X = x$, isolating incremental lift from organic baseline behavior.
 
 ---
 
 ### 2. Double / Debiased Machine Learning & Neyman Orthogonality (Week 2)
 
-Standard machine learning regressions applied directly to high-dimensional confounders suffer from **regularization bias** and slow convergence rates. EconoCausal deploys **Chernozhukov et al.'s Double Machine Learning (DML)** with **Neyman Orthogonal residualization** (Frisch-Waugh-Lovell causal decomposition):
+Standard machine learning regressions applied directly to high-dimensional confounders suffer from regularization bias and slow convergence rates. EconoCausal deploys **Chernozhukov et al.'s Double Machine Learning (DML)** with **Neyman Orthogonal residualization** (Frisch-Waugh-Lovell causal decomposition):
 
-1. **Outcome Nuisance Model:** Predict outcome $Y$ from confounders $W$ using LightGBM or Random Forests:  
-   $$\hat{q}(W) = \mathbb{E}[Y \mid W], \quad \text{Residual: } \tilde{Y} = Y - \hat{q}(W)$$
-2. **Treatment Propensity Nuisance Model:** Predict treatment $T$ from confounders $W$:  
-   $$\hat{e}(W) = \mathbb{E}[T \mid W], \quad \text{Residual: } \tilde{T} = T - \hat{e}(W)$$
-3. **Orthogonal Residual Regression:** Regress the outcome residual on the treatment residual:  
-   $$\tilde{Y} = \tau(X) \cdot \tilde{T} + \varepsilon, \quad \text{where } \mathbb{E}[\varepsilon \cdot \tilde{T} \mid X] = 0$$
+1. **Outcome Nuisance Model:** Predict baseline outcome $Y$ from confounders $W$ (via LightGBM / Random Forest) to calculate outcome residuals $\tilde{Y} = Y - \hat{q}(W)$.
+2. **Treatment Propensity Model:** Predict treatment assignment $T$ from confounders $W$ to calculate propensity residuals $\tilde{T} = T - \hat{e}(W)$.
+3. **Orthogonal Residual Regression:** Regress outcome residuals on treatment residuals $\tilde{Y} = \tau(X) \cdot \tilde{T} + \varepsilon$ to estimate true causal lift $\tau(X)$ invariant to confounding.
 
 <p align="center">
   <img src="docs/formulas/formula_dml_orthogonal.svg" alt="Double Machine Learning & Neyman Orthogonal Residuals" width="850"/>
 </p>
 
-<details>
-<summary><b>View Plaintext & LaTeX Equations</b></summary>
-
-```math
-\tilde{Y} = Y - \hat{q}(W) = Y - \mathbb{E}[Y \mid W], \quad \tilde{T} = T - \hat{e}(W) = T - \mathbb{E}[T \mid W]
-```
-
-```math
-\tilde{Y} = \tau(X) \cdot \tilde{T} + \varepsilon, \quad \text{where } \mathbb{E}[\varepsilon \cdot \tilde{T} \mid X] = 0
-```
-
-```math
-\|\hat{\tau} - \tau_0\| = O_p(N^{-1/2}) \quad \text{when } \|\hat{\eta} - \eta_0\| = o_p(N^{-1/4})
-```
-
-- **Neyman Orthogonality Guarantee:** The gateau derivative of the moment condition with respect to nuisance parameters is zero. First-order estimation errors in $\hat{q}$ and $\hat{e}$ vanish, allowing the causal parameter $\hat{\tau}$ to converge at the parametric $\sqrt{N}$-rate even when using non-parametric ML estimators.
-</details>
+- **Neyman Orthogonality Guarantee:** The gateaux derivative of the moment condition with respect to nuisance parameters is zero. First-order estimation errors in nuisance models vanish, allowing the causal parameter $\hat{\tau}$ to converge at the parametric $\sqrt{N}$-rate even when using non-parametric ML estimators.
 
 ---
 
 ### 3. Prescriptive Budget Optimization via SciPy HiGHS LP (Week 3)
 
-Once individual treatment effects $\tau_{i,d}$ are estimated for each customer $i$ and discount tier $d \in \{0, 10, 20\}$, EconoCausal formulates a **Constrained Linear Program (LP)** using `scipy.optimize.linprog` (HiGHS Simplex Solver) to maximize net incremental revenue subject to an enterprise marketing budget constraint:
+Once individual treatment effects $\tau_{i,d}$ are estimated for each customer $i$ across discount tiers $d \in \{0, 10, 20\}$, EconoCausal formulates a **Constrained Linear Program (LP)** using `scipy.optimize.linprog` (HiGHS Simplex Solver) to maximize net incremental revenue subject to an enterprise marketing budget constraint:
 
 <p align="center">
   <img src="docs/formulas/formula_scipy_lp.svg" alt="Prescriptive Budget Optimization (SciPy HiGHS LP Solver)" width="850"/>
 </p>
 
-<details>
-<summary><b>View Plaintext & LaTeX Equations</b></summary>
-
-```math
-\max_{\{x_{i,d}\}} \sum_{i=1}^N \sum_{d \in \{0, 10, 20\}} x_{i,d} \cdot \left[ \tau_{i,d} \cdot \mathrm{AOV}_i - P_{i,d} \cdot d \right]
-```
-
-```math
-\text{subject to } \sum_{i=1}^N \sum_{d \in \{0, 10, 20\}} x_{i,d} \cdot (P_{i,d} \cdot d) \le \mathrm{Budget}_{\mathrm{marketing}}
-```
-
-```math
-\sum_{d \in \{0, 10, 20\}} x_{i,d} = 1 \quad \forall i \in \{1, \dots, N\}, \quad x_{i,d} \in \{0, 1\}
-```
-
 - **Decision Variable $x_{i,d} \in \{0, 1\}$:** Indicator variable specifying whether customer $i$ is assigned discount tier $d$.
-- **Objective:** Expected net incremental gross revenue (incremental conversion lift $\times$ Average Order Value minus discount cost).
-- **Constraints:** Total coupon expenditure cannot exceed the allocated budget, and each customer receives exactly one discrete action tier.
-</details>
+- **Objective Function:** Maximizes expected net incremental gross revenue (incremental conversion lift $\times$ Average Order Value minus discount cost).
+- **Simplex & Budget Constraints:** Total coupon expenditure cannot exceed the allocated budget, and each customer receives exactly one discrete action tier.
 
 ---
 
@@ -223,23 +176,12 @@ In production, macroeconomic shifts and competitive pressure cause customer elas
   <img src="docs/formulas/formula_drift_ks_psi.svg" alt="Production Data Drift & Stability Monitoring" width="850"/>
 </p>
 
-<details>
-<summary><b>View Plaintext & LaTeX Equations</b></summary>
-
-```math
-D_{KS} = \sup_{z} \left| F_{\mathrm{ref}}(z) - F_{\mathrm{prod}}(z) \right|
-```
-
-```math
-\mathrm{PSI} = \sum_{b=1}^B \left( P_{\mathrm{prod}, b} - P_{\mathrm{ref}, b} \right) \cdot \ln\left( \frac{P_{\mathrm{prod}, b}}{P_{\mathrm{ref}, b}} \right)
-```
-
 - **Two-Sample KS Statistic $D_{KS}$:** Measures the supremum difference between the empirical cumulative distribution functions of the baseline reference population $F_{\mathrm{ref}}$ and production monitoring batch $F_{\mathrm{prod}}$.
-- **Population Stability Index (PSI):** Quantifies shift across $B = 10$ quantile bins. Threshold rules:
-  - $\mathrm{PSI} < 0.10$: Stable (No drift)
+- **Population Stability Index (PSI):** Quantifies distribution shift across $B = 10$ quantile bins:
+  - $\mathrm{PSI} < 0.10$: Stable (No drift detected)
   - $0.10 \le \mathrm{PSI} < 0.25$: Moderate drift (Warning alert)
   - $\mathrm{PSI} \ge 0.25$: Significant distribution shift (Automatic model retrain trigger)
-</details>
+
 
 ---
 
