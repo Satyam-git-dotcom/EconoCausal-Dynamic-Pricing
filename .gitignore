@@ -18,3 +18,10 @@ dist-ssr/
 *.log
 .env
 .DS_Store
+
+# Media & Recordings
+*.mov
+*.mp4
+raw_recording.mov
+EconoCausal_Demo_Final.mp4
+
